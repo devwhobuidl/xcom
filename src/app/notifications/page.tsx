@@ -2,8 +2,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Settings2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heart, MessageSquare, UserPlus, Zap, Repeat2, ArrowLeft, Settings2 } from "lucide-react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { NotificationsClient } from "@/components/notifications/NotificationsClient";
 
 export default async function NotificationsPage() {
@@ -20,6 +22,8 @@ export default async function NotificationsPage() {
   if (!user) {
     redirect("/");
   }
+
+  console.log("NotificationsPage: User found in DB:", user.username || user.walletAddress);
 
   const notifications = await prisma.notification.findMany({
     where: { userId: user.id },
@@ -55,6 +59,7 @@ export default async function NotificationsPage() {
         }
       }
     }
+
   });
 
   return (
