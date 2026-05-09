@@ -1,142 +1,227 @@
 "use client";
 
-import { useState } from "react";
-import { Heart, MessageSquare, Repeat2, Bookmark, Share, Skull, MoreHorizontal, ShieldCheck, Zap } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React, { useState } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { Skull, MessageSquare, Repeat2, Heart, ShieldAlert, Share, Trash2, BarChart2 } from "lucide-react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { reactToPost, createPost, deletePost } from "@/app/actions/community";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { Composer } from "./Composer";
+
+interface Post {
+  id: string;
+  content: string;
+  imageUrl?: string | null;
+  createdAt: Date;
+  parentId?: string | null;
+  author: {
+    id: string;
+    username?: string | null;
+    walletAddress: string;
+    image?: string | null;
+    points: number;
+  };
+  reactions: {
+    type: string;
+    userId: string;
+  }[];
+  _count?: {
+    reactions: number;
+    replies: number;
+  };
+  community?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+}
 
 interface PostCardProps {
-  post: any;
+  post: Post;
+  currentUserId?: string;
   isReply?: boolean;
 }
 
-export const PostCard = ({ post, isReply = false }: PostCardProps) => {
-  const { data: session } = useSession();
-  const [likes, setLikes] = useState(post.reactions?.filter((r: any) => r.type === "LIKE").length || 0);
-  const [fuckYous, setFuckYous] = useState(post.reactions?.filter((r: any) => r.type === "FUCK_YOU").length || 0);
-  const [isLiked, setIsLiked] = useState(post.reactions?.some((r: any) => r.userId === session?.user?.id && r.type === "LIKE"));
-  const [isFucked, setIsFucked] = useState(post.reactions?.some((r: any) => r.userId === session?.user?.id && r.type === "FUCK_YOU"));
+export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
+  const [showReplyComposer, setShowReplyComposer] = useState(false);
+  const [optimisticReactions, setOptimisticReactions] = useState(post.reactions);
 
-  const handleLike = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!session) return;
-    setIsLiked(!isLiked);
-    setLikes(prev => isLiked ? prev - 1 : prev + 1);
-    // Call API
+  const handleReact = async (type: "LIKE" | "FUCK_YOU") => {
+    if (!currentUserId) {
+      toast.error("Connect your wallet to roast Nikita!");
+      return;
+    }
+
+    // Toggle logic for optimistic UI
+    const alreadyReacted = optimisticReactions.find(r => r.userId === currentUserId && r.type === type);
+    if (alreadyReacted) {
+      setOptimisticReactions(prev => prev.filter(r => !(r.userId === currentUserId && r.type === type)));
+    } else {
+      setOptimisticReactions(prev => [...prev, { type, userId: currentUserId }]);
+    }
+
+    try {
+      await reactToPost(post.id, type);
+      if (!alreadyReacted) {
+        toast.success(type === "FUCK_YOU" ? "Nikita felt that! +10 pts" : "Solid hate! +10 pts");
+      }
+    } catch (error) {
+      toast.error("Failed to react. Nikita's firewall?");
+      setOptimisticReactions(post.reactions);
+    }
   };
 
-  const handleFuckYou = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!session) return;
-    setIsFucked(!isFucked);
-    setFuckYous(prev => isFucked ? prev - 1 : prev + 1);
-    // Call API
-  };
+  const fuckYouCount = optimisticReactions.filter((r) => r.type === "FUCK_YOU").length;
+  const likeCount = optimisticReactions.filter((r) => r.type === "LIKE").length;
+  const hasLiked = optimisticReactions.some(r => r.userId === currentUserId && r.type === "LIKE");
+  const hasFucked = optimisticReactions.some(r => r.userId === currentUserId && r.type === "FUCK_YOU");
 
   return (
-    <div className={cn(
-      "group bg-zinc-950/40 border border-white/5 hover:bg-white/[0.02] transition-all duration-300",
-      isReply ? "p-4 ml-8 rounded-2xl" : "p-5 border-t-0 border-x-0"
-    )}>
-      <div className="flex gap-4">
-        {/* AVATAR COLUMN */}
-        <div className="flex flex-col items-center gap-2">
-          <Link href={`/profile/${post.author.id}`} className="shrink-0">
-            <Avatar className="w-12 h-12 border border-white/10 ring-0 group-hover:border-white/20 transition-all shadow-2xl">
-              <AvatarImage src={post.author.image || ""} />
-              <AvatarFallback className="bg-zinc-900 text-xs font-black uppercase text-white/40">
-                {post.author.username?.slice(0, 2) || "RE"}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-          {!isReply && post.replies?.length > 0 && (
-            <div className="w-0.5 flex-1 bg-white/5 group-hover:bg-white/10 transition-colors rounded-full" />
-          )}
-        </div>
-
-        {/* CONTENT COLUMN */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <div className="flex items-center gap-2 truncate">
-              <Link href={`/profile/${post.author.id}`} className="font-black text-[15px] text-white hover:underline truncate">
-                {post.author.username || 'Anonymous Rebel'}
-              </Link>
-              {post.author.points > 1000 && (
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500/20 shrink-0" />
-              )}
-              <span className="text-white/20 text-xs hidden sm:inline truncate">
-                @{post.author.walletAddress?.slice(0, 6)}...{post.author.walletAddress?.slice(-4)}
-              </span>
-              <span className="text-white/10 text-xs">•</span>
-              <span className="text-white/30 text-[11px] font-black uppercase tracking-tighter shrink-0">
-                {formatDistanceToNow(new Date(post.createdAt))} ago
-              </span>
-            </div>
-            <button className="text-white/20 hover:text-white transition-colors p-1">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
+    <div className={`relative ${isReply ? "pl-12" : ""}`}>
+      {isReply && (
+        <div className="absolute left-6 top-0 bottom-0 w-[2px] bg-white/10" />
+      )}
+      
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={`p-4 border-b border-white/5 hover:bg-white/[0.02] transition-all group relative`}
+      >
+        <div className="flex gap-3">
+          <div className="flex flex-col items-center">
+            <Link href={`/profile/${post.author.username || post.author.id}`}>
+              <Avatar className="w-10 h-10 border border-white/10 rounded-full hover:border-primary transition-colors">
+                <AvatarImage src={post.author.image || ""} />
+                <AvatarFallback className="bg-secondary text-primary font-bold">
+                  {post.author.username?.slice(0, 2) || post.author.walletAddress.slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+            {!isReply && post._count?.replies! > 0 && (
+               <div className="w-[2px] flex-1 bg-white/10 mt-2" />
+            )}
           </div>
-
-          <Link href={`/status/${post.id}`} className="block mt-1">
-            <p className="text-[15px] leading-relaxed text-white/90 whitespace-pre-wrap break-words font-medium">
-              {post.content}
-            </p>
+          
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Link href={`/profile/${post.author.username || post.author.id}`} className="font-bold text-[15px] hover:underline cursor-pointer truncate">
+                  {post.author.username || `${post.author.walletAddress.slice(0, 4)}...${post.author.walletAddress.slice(-4)}`}
+                </Link>
+                {post.author.points > 5000 && (
+                  <Skull className="w-3.5 h-3.5 text-primary drop-shadow-[0_0_5px_rgba(255,0,0,0.5)]" />
+                )}
+                <span className="text-[14px] text-white/40 font-normal truncate">
+                  @{post.author.username?.toLowerCase() || post.author.walletAddress.slice(0, 6)} · {formatDistanceToNow(new Date(post.createdAt))}
+                </span>
+                {post.community && (
+                  <Link 
+                    href={`/community/${post.community.slug}`}
+                    className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-[9px] font-black text-primary tracking-widest hover:bg-primary/20 transition-all uppercase"
+                  >
+                    {post.community.name}
+                  </Link>
+                )}
+              </div>
+              {currentUserId === post.author.id && (
+                <button 
+                  onClick={async () => {
+                    if (confirm("Execute this post? This cannot be undone.")) {
+                      try {
+                        await deletePost(post.id);
+                        toast.success("Post obliterated.");
+                      } catch (e) {
+                        toast.error("Failed to delete.");
+                      }
+                    }
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-primary p-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            <p className="text-[15px] leading-normal whitespace-pre-wrap text-white/90">{post.content}</p>
+            
             {post.imageUrl && (
-              <div className="mt-3 rounded-2xl overflow-hidden border border-white/10 bg-zinc-900">
-                <img src={post.imageUrl} alt="" className="w-full h-auto object-cover max-h-[500px]" />
+              <div className="mt-3 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900/50 relative aspect-video group/img">
+                <Image 
+                   src={post.imageUrl} 
+                   alt="Meme" 
+                   fill 
+                   className="object-cover transition-transform duration-500 group-hover/img:scale-105"
+                   unoptimized
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
               </div>
             )}
-          </Link>
-
-          {/* ACTIONS */}
-          <div className="flex items-center justify-between mt-4 max-w-md">
-            <button className="flex items-center gap-2 group/action text-white/40 hover:text-blue-500 transition-all px-2 py-1 -ml-2 rounded-full hover:bg-blue-500/10">
-              <div className="p-1.5 rounded-full group-hover/action:bg-blue-500/10">
-                <MessageSquare className="w-4 h-4 group-active/action:scale-75 transition-transform" />
-              </div>
-              <span className="text-[13px] font-black">{post.replies?.length || 0}</span>
-            </button>
-
-            <button 
-              onClick={handleFuckYou}
-              className={cn(
-                "flex items-center gap-2 group/action transition-all px-2 py-1 rounded-full hover:bg-red-600/10",
-                isFucked ? "text-red-600" : "text-white/40 hover:text-red-600"
-              )}
-            >
-              <div className="p-1.5 rounded-full group-hover/action:bg-red-600/10">
-                <Skull className={cn("w-4 h-4 group-active/action:scale-125 transition-transform", isFucked && "fill-red-600")} />
-              </div>
-              <span className="text-[13px] font-black">{fuckYous}</span>
-            </button>
-
-            <button 
-              onClick={handleLike}
-              className={cn(
-                "flex items-center gap-2 group/action transition-all px-2 py-1 rounded-full hover:bg-pink-600/10",
-                isLiked ? "text-pink-600" : "text-white/40 hover:text-pink-600"
-              )}
-            >
-              <div className="p-1.5 rounded-full group-hover/action:bg-pink-600/10">
-                <Heart className={cn("w-4 h-4 group-active/action:scale-125 transition-transform", isLiked && "fill-pink-600")} />
-              </div>
-              <span className="text-[13px] font-black">{likes}</span>
-            </button>
-
-            <div className="flex items-center gap-0.5">
-              <button className="p-2.5 text-white/30 hover:text-white transition-all rounded-full hover:bg-white/5">
-                <Bookmark className="w-4 h-4" />
+            <div className="flex items-center justify-between mt-3 max-w-lg text-white/40 -ml-2">
+              <button 
+                onClick={() => setShowReplyComposer(!showReplyComposer)}
+                className="flex items-center gap-1.5 hover:text-blue-400 transition-colors group/btn p-2 rounded-full"
+              >
+                <div className="p-2 rounded-full group-hover/btn:bg-blue-400/10 transition-colors">
+                  <MessageSquare className="w-[19px] h-[19px]" />
+                </div>
+                <span className="text-[13px] font-medium">{post._count?.replies || 0}</span>
               </button>
-              <button className="p-2.5 text-white/30 hover:text-white transition-all rounded-full hover:bg-white/5">
-                <Share className="w-4 h-4" />
+              
+              <button className="flex items-center gap-1.5 hover:text-green-500 transition-colors group/btn p-2 rounded-full">
+                <div className="p-2 rounded-full group-hover/btn:bg-green-500/10 transition-colors">
+                  <Repeat2 className="w-[19px] h-[19px]" />
+                </div>
+                <span className="text-[13px] font-medium">0</span>
+              </button>
+              
+              <button 
+                onClick={() => handleReact("LIKE")}
+                className={`flex items-center gap-1.5 transition-colors group/btn p-2 rounded-full ${hasLiked ? "text-pink-500" : "hover:text-pink-500"}`}
+              >
+                <div className="p-2 rounded-full group-hover/btn:bg-pink-500/10 transition-colors">
+                  <Heart className={`w-[19px] h-[19px] ${hasLiked ? "fill-pink-500" : ""}`} />
+                </div>
+                <span className="text-[13px] font-medium">{likeCount}</span>
+              </button>
+              
+              <button 
+                onClick={() => handleReact("FUCK_YOU")}
+                className={`flex items-center gap-1.5 transition-all group/btn p-2 rounded-full ${hasFucked ? "text-primary drop-shadow-[0_0_8px_rgba(255,0,0,0.4)]" : "hover:text-primary"}`}
+              >
+                <div className="p-2 rounded-full group-hover/btn:bg-primary/10 transition-colors">
+                  <Skull className={`w-[19px] h-[19px] ${hasFucked ? "animate-pulse stroke-[2.5px]" : ""}`} />
+                </div>
+                <span className="text-[13px] font-black uppercase tracking-tighter">{hasFucked ? "FUCKED" : "FUCK YOU"}</span>
+              </button>
+
+              <button className="p-2 rounded-full hover:bg-primary/10 hover:text-primary transition-colors group/share">
+                <Share className="w-[18px] h-[18px] group-hover/share:scale-110 transition-transform" />
               </button>
             </div>
+
+
+            <AnimatePresence>
+              {showReplyComposer && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden mt-2"
+                >
+                  <Composer 
+                    parentId={post.id} 
+                    placeholder="Post your reply" 
+                    onSuccess={() => setShowReplyComposer(false)}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

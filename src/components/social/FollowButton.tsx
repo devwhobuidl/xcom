@@ -1,76 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { followUser } from "@/app/actions/user";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserMinus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface FollowButtonProps {
-  userId: string;
-  isFollowing: boolean;
-  onToggle?: () => void;
-  className?: string;
-  variant?: "default" | "outline" | "ghost";
+  targetUserId: string;
+  isFollowing?: boolean;
 }
 
-export const FollowButton = ({ 
-  userId, 
-  isFollowing, 
-  onToggle,
-  className,
-  variant = "default" 
-}: FollowButtonProps) => {
+export function FollowButton({ targetUserId, isFollowing: initialIsFollowing }: FollowButtonProps) {
+  const { data: session } = useSession();
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const handleFollow = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleFollow = async () => {
+    if (!session) {
+      toast.error("Connect wallet to follow rebels!");
+      return;
+    }
+
     setLoading(true);
-
     try {
-      const res = await fetch(`/api/users/${userId}/follow`, {
-        method: "POST",
-      });
-
-      if (!res.ok) throw new Error("Failed to toggle follow");
-
-      const data = await res.json();
-      toast.success(data.isFollowing ? "Rebel followed! 💀" : "Rebel abandoned.");
-      
-      if (onToggle) onToggle();
-      router.refresh();
-    } catch (error) {
-      toast.error("System error. Nikita wins this round.");
+      await followUser(targetUserId);
+      setIsFollowing(!isFollowing);
+      toast.success(isFollowing ? "Unfollowed rebel." : "Joined their squad!");
+    } catch (e) {
+      toast.error("Nikita blocked the connection.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (session?.user?.id === targetUserId) return null;
+
   return (
     <Button
-      variant={isFollowing ? "outline" : variant}
-      size="sm"
       onClick={handleFollow}
       disabled={loading}
-      className={`font-black uppercase tracking-widest text-[10px] rounded-xl transition-all h-9 ${
+      variant={isFollowing ? "outline" : "default"}
+      className={`rounded-full font-black uppercase italic tracking-tight transition-all active:scale-95 ${
         isFollowing 
-          ? "border-white/10 text-white/40 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50" 
-          : "bg-white text-black hover:bg-zinc-200"
-      } ${className}`}
+          ? "border-white/10 hover:border-red-500/50 hover:text-red-500 hover:bg-red-500/5" 
+          : "bg-white text-black hover:bg-white/90 shadow-[0_5px_15px_rgba(255,255,255,0.1)]"
+      }`}
     >
-      {loading ? (
-        <Loader2 className="w-3 h-3 animate-spin" />
-      ) : isFollowing ? (
-        <>
-          <UserMinus className="w-3 h-3 mr-1.5" /> Unfollow
-        </>
-      ) : (
-        <>
-          <UserPlus className="w-3 h-3 mr-1.5" /> Follow
-        </>
-      )}
+      {isFollowing ? "FOLLOWING" : "FOLLOW"}
     </Button>
   );
-};
+}
