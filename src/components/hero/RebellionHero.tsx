@@ -1,103 +1,92 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Skull } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Skull, TrendingUp, Shield, Zap } from "lucide-react";
 
 export const RebellionHero = () => {
-  const [show, setShow] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Show on mount for a short time
-    setShow(true);
-    const timer = setTimeout(() => setShow(false), 3000);
-    return () => clearTimeout(timer);
+    setIsVisible(true);
   }, []);
 
   return (
-    <>
+    <div className="relative w-full overflow-hidden rounded-b-[4rem] bg-black border-b border-white/5">
+      {/* Dynamic Background Effects */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-20" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] opacity-10" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+      </div>
+
       <AnimatePresence>
-        {show && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-black flex items-center justify-center overflow-hidden"
-          >
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.2, 1] }}
-              transition={{ duration: 1, times: [0, 0.7, 1] }}
-              className="absolute inset-0 bg-primary/20 blur-[150px] rounded-full"
-            />
+        {isVisible && (
+          <div className="relative z-10 max-w-6xl mx-auto px-8 py-24 md:py-32 flex flex-col items-center text-center">
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 rounded-full backdrop-blur-xl mb-8"
+            >
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">System Unlocked: Version 0.42.0</span>
+            </motion.div>
 
-            <div className="text-center space-y-8 z-10 p-6">
-              <motion.div 
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ type: "spring", damping: 10 }}
-              >
-                <Skull className="w-40 h-40 text-primary mx-auto drop-shadow-[0_0_30px_rgba(255,0,0,0.8)]" />
-              </motion.div>
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.8 }}
+              className="text-6xl md:text-8xl font-black italic tracking-tighter text-white mb-6 nikita-glitch leading-none"
+            >
+              THE <span className="text-primary">REBELLION</span> <br />
+              STARTS HERE
+            </motion.h1>
 
-              <div className="space-y-2">
-                <motion.h2 
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-7xl font-black nikita-glitch italic uppercase tracking-tighter text-primary"
-                >
-                  SYSTEM UNLOCKED
-                </motion.h2>
-                <motion.p 
-                  initial={{ x: -100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-2xl font-mono text-white max-w-2xl mx-auto"
-                >
-                  Welcome back to the rebellion, <span className="text-primary font-bold underline italic">you magnificent bastard</span> 💀
-                </motion.p>
-              </div>
+            {/* Sub-headline */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
+              className="max-w-2xl text-xl md:text-2xl text-white/50 font-medium font-mono leading-relaxed mb-12"
+            >
+              The XCOM ecosystem is for the ones who refuse to be exit liquidity. Join the clans, roast the corporates, and earn the chaos.
+            </motion.p>
 
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex justify-center gap-4 pt-4"
-              >
-                <div className="px-4 py-2 bg-primary/20 border border-primary/50 text-primary font-mono text-sm animate-pulse">
-                  IDENTITY VERIFIED: REBEL #{(Math.random() * 9999).toFixed(0)}
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Simulated Confetti (Particles) */}
-            <div className="absolute inset-0 pointer-events-none">
-              {[...Array(20)].map((_, i) => (
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-4xl">
+              {[
+                { icon: TrendingUp, label: "NETWORK TVL", value: "$1.4M", color: "text-primary" },
+                { icon: Shield, label: "CLANS ACTIVE", value: "42", color: "text-blue-500" },
+                { icon: Zap, label: "DAILY ROASTS", value: "12.8K", color: "text-yellow-500" },
+                { icon: Skull, label: "EXIT LIQUIDITY", value: "0%", color: "text-green-500" },
+              ].map((stat, i) => (
                 <motion.div
-                  key={i}
-                  initial={{ 
-                    x: Math.random() * 100 + "%", 
-                    y: "-10%",
-                    rotate: 0,
-                    opacity: 1
-                  }}
-                  animate={{ 
-                    y: "110%",
-                    rotate: 360,
-                    opacity: 0
-                  }}
-                  transition={{ 
-                    duration: Math.random() * 2 + 1,
-                    repeat: Infinity,
-                    delay: Math.random() * 2
-                  }}
-                  className="absolute w-2 h-2 bg-primary"
-                />
+                  key={stat.label}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + (i * 0.1) }}
+                  className="bg-white/[0.02] border border-white/5 p-6 rounded-[2rem] hover:bg-white/[0.04] transition-all group"
+                >
+                  <stat.icon className={`w-6 h-6 mb-3 ${stat.color} group-hover:scale-110 transition-transform`} />
+                  <div className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">{stat.label}</div>
+                  <div className="text-2xl font-black italic tracking-tighter text-white">{stat.value}</div>
+                </motion.div>
               ))}
             </div>
-          </motion.div>
+            
+            {/* Animated Scroll Indicator */}
+            <motion.div 
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="mt-16 opacity-30"
+            >
+              <div className="w-1 h-12 bg-gradient-to-b from-primary to-transparent rounded-full" />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };

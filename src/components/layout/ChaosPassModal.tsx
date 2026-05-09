@@ -1,97 +1,102 @@
 "use client";
 
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
 } from "@/components/ui/dialog";
-import { Skull, Flame, Bomb, X, Gavel } from "lucide-react";
+import { Shield, Skull, Zap, Flame, Terminal, Fingerprint } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface ChaosPassModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const ChaosPassModal = ({ isOpen, onClose }: ChaosPassModalProps) => {
+export const ChaosPassModal = () => {
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-black border-red-900/50 border-2 text-white max-w-2xl p-0 overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)]">
-        <div className="relative overflow-hidden">
-          {/* Background Decorations */}
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-600/10 blur-[100px] rounded-full" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-red-600/10 blur-[100px] rounded-full" />
-          
-          <div className="relative p-8 text-center flex flex-col items-center">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, type: "spring" }}
-              className="mb-6"
-            >
-              <div className="relative">
-                <Skull className="w-20 h-20 text-red-600 animate-pulse" />
-                <Flame className="w-8 h-8 text-orange-500 absolute -top-2 -right-2 animate-bounce" />
-                <Gavel className="w-10 h-10 text-zinc-500 absolute -bottom-4 -right-4 -rotate-45" />
-                <Bomb className="w-8 h-8 text-zinc-600 absolute -bottom-2 -left-2 rotate-12" />
-              </div>
-            </motion.div>
-
-            <div className="relative mb-4">
-              <h1 className="text-6xl font-black text-red-600 tracking-tighter italic uppercase">
-                PREMIUM?
-              </h1>
-              <div className="absolute -inset-1 text-red-600/30 blur-sm animate-pulse uppercase text-6xl font-black tracking-tighter italic pointer-events-none">
-                PREMIUM?
-              </div>
+    <Dialog>
+      <DialogTrigger asChild>
+        <button className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 hover:border-primary/50 transition-all group relative overflow-hidden">
+          <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Shield className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+          <div className="flex flex-col items-start hidden xl:flex">
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Chaos Pass</span>
+            <span className="text-[11px] font-bold text-white/50">LEVEL 01 REBEL</span>
+          </div>
+        </button>
+      </DialogTrigger>
+      
+      <DialogContent className="sm:max-w-[600px] bg-black border-primary/30 p-0 overflow-hidden rounded-[2rem] border-2">
+        <div className="relative">
+          {/* Hero Section */}
+          <div className="h-48 bg-gradient-to-br from-primary via-black to-black p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 opacity-10 rotate-12 translate-x-1/4 -translate-y-1/4">
+              <Skull className="w-64 h-64 text-white" />
             </div>
             
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <p className="text-3xl font-bold mb-6 tracking-tight text-white/90 uppercase">
-                We don't do that corporate shit here.
+            <div className="relative z-10 flex flex-col justify-end h-full">
+              <div className="flex items-center gap-3 mb-2">
+                <Terminal className="w-5 h-5 text-white/60" />
+                <span className="text-xs font-mono text-white/60 tracking-widest uppercase">System: Decentralized</span>
+              </div>
+              <h2 className="text-4xl font-black italic tracking-tighter text-white">CHAOS PASS v1.0</h2>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-8">
+            <div className="space-y-4">
+              <p className="text-white/50 font-medium leading-relaxed font-mono text-sm">
+                The <span className="text-primary font-bold">Chaos Pass</span> is your immutable identity in the rebellion. It tracks your contributions, your roasts, and your dedication to the fallback of corporate control.
               </p>
-              
-              <div className="space-y-4 mb-8 text-zinc-400 font-medium text-lg">
-                <p>
-                  This is the <span className="text-white font-bold">$XCOM rebellion</span>.
-                </p>
-                <div className="flex flex-col gap-1">
-                  <p>No subscriptions. No paywalls.</p>
-                  <p>Just pure chaos and real rewards.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: Zap, label: "ENERGY", value: "85%", color: "text-yellow-500" },
+                { icon: Flame, label: "INFAMY", value: "RANK #42", color: "text-primary" },
+                { icon: Shield, label: "DEFENSE", value: "UNBREAKABLE", color: "text-blue-500" },
+                { icon: Fingerprint, label: "SIG", value: "VERIFIED", color: "text-green-500" },
+              ].map((stat, i) => (
+                <motion.div 
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white/[0.03] border border-white/10 p-4 rounded-2xl group hover:bg-white/[0.05] transition-colors"
+                >
+                  <div className="flex items-center gap-3 mb-1">
+                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{stat.label}</span>
+                  </div>
+                  <div className="text-lg font-black italic tracking-tighter text-white">{stat.value}</div>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="pt-6 border-t border-white/5 space-y-4">
+              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">REBEL MISSION:</h4>
+              <div className="bg-primary/5 border border-primary/20 p-4 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <Skull className="w-12 h-12 text-primary" />
+                </div>
+                <div className="text-sm font-bold text-white mb-1">THE GREAT NIKITA ROAST</div>
+                <p className="text-xs text-white/40 font-mono">Collect 1000 INFAMY points to unlock the next level of the rebellion.</p>
+                <div className="mt-4 h-1.5 w-full bg-black rounded-full overflow-hidden border border-white/5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: "65%" }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className="h-full bg-primary" 
+                  />
                 </div>
               </div>
+            </div>
 
-              <div className="bg-red-950/30 border border-red-900/50 p-6 rounded-2xl mb-8 relative group overflow-hidden">
-                <div className="absolute inset-0 bg-red-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                <p className="text-2xl font-black text-red-500 relative z-10">
-                  Post more. Hate Nikita harder.<br/>
-                  Get $XCOM airdrops.
-                </p>
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Connection Stable</span>
               </div>
-
-              <button 
-                onClick={onClose}
-                className="group relative px-12 py-5 bg-red-600 hover:bg-red-700 text-white rounded-full text-xl font-black transition-all hover:scale-105 active:scale-95 shadow-[0_10px_30px_rgba(220,38,38,0.4)]"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  BACK TO THE PIT <Skull className="w-6 h-6" />
-                </span>
-                <div className="absolute inset-0 rounded-full bg-white/20 scale-0 group-hover:scale-100 transition-transform duration-500 blur-xl" />
-              </button>
-            </motion.div>
-            
-            {/* Edge Memes/Decoration */}
-            <div className="mt-12 flex gap-8 opacity-20 grayscale hover:grayscale-0 transition-all duration-700">
-               <div className="flex items-center gap-2 text-xs font-mono">
-                 <X className="w-4 h-4 text-red-600" /> BROKEN SYSTEM
-               </div>
-               <div className="flex items-center gap-2 text-xs font-mono">
-                 <Bomb className="w-4 h-4 text-red-600" /> BYE NIKITA
-               </div>
+              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">v0.42.0-chaos</span>
             </div>
           </div>
         </div>

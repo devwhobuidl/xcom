@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { joinCommunity, leaveCommunity } from "@/app/actions/community";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -8,27 +8,21 @@ import { useRouter } from "next/navigation";
 interface JoinButtonProps {
   communityId: string;
   isJoined: boolean;
-  isLoggedIn: boolean;
 }
 
-export function JoinButton({ communityId, isJoined, isLoggedIn }: JoinButtonProps) {
+export function JoinButton({ communityId, isJoined }: JoinButtonProps) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const handleToggle = async () => {
-    if (!isLoggedIn) {
-      toast.error("Sign in to join the rebellion!");
-      return;
-    }
-
     startTransition(async () => {
       try {
         if (isJoined) {
           await leaveCommunity(communityId);
-          toast.success("Left the clan. Safe travels, loner.");
+          toast.success("Left the clan. The rebellion continues elsewhere.");
         } else {
           await joinCommunity(communityId);
-          toast.success("Clan joined! Rebellion growing stronger.");
+          toast.success("Welcome to the frontlines! Clan joined. 🔥");
         }
         router.refresh();
       } catch (error) {

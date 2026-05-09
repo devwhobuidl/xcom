@@ -1,65 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
-import { followUser, unfollowUser } from "@/app/actions/community";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { UserPlus, UserMinus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 interface FollowButtonProps {
   userId: string;
   isFollowing: boolean;
-  isLoggedIn: boolean;
+  onToggle?: () => void;
+  className?: string;
+  variant?: "default" | "outline" | "ghost";
 }
 
-export const FollowButton = ({ userId, isFollowing: initialFollowing, isLoggedIn }: FollowButtonProps) => {
-  const [isFollowing, setIsFollowing] = useState(initialFollowing);
+export const FollowButton = ({ 
+  userId, 
+  isFollowing, 
+  onToggle,
+  className,
+  variant = "default" 
+}: FollowButtonProps) => {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleToggle = async () => {
-    if (!isLoggedIn) {
-      toast.error("Sign in to join the rebellion!");
-      return;
-    }
-
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
-    // Optimistic update
-    const previousState = isFollowing;
-    setIsFollowing(!previousState);
 
     try {
-      if (previousState) {
-        await unfollowUser(userId);
-        toast.success("Unfollowed. One less ally in the pit.");
-      } else {
-        await followUser(userId);
-        toast.success("Followed! Rebellion growing stronger. +15 pts");
-      }
+      const res = await fetch(`/api/users/${userId}/follow`, {
+        method: "POST",
+      });
+
+      if (!res.ok) throw new Error("Failed to toggle follow");
+
+      const data = await res.json();
+      toast.success(data.isFollowing ? "Rebel followed! 💀" : "Rebel abandoned.");
+      
+      if (onToggle) onToggle();
+      router.refresh();
     } catch (error) {
-      toast.error("Failed to update follow status.");
-      setIsFollowing(previousState);
+      toast.error("System error. Nikita wins this round.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+    <Button
+      variant={isFollowing ? "outline" : variant}
+      size="sm"
+      onClick={handleFollow}
       disabled={loading}
-      onClick={handleToggle}
-      className={`px-6 py-2 rounded-full font-black text-sm transition-all uppercase tracking-widest ${
+      className={`font-black uppercase tracking-widest text-[10px] rounded-xl transition-all h-9 ${
         isFollowing 
-          ? "border border-white/20 text-white hover:border-primary/50 hover:text-primary hover:bg-primary/5" 
-          : "bg-white text-black hover:bg-primary hover:text-white"
-      } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+          ? "border-white/10 text-white/40 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50" 
+          : "bg-white text-black hover:bg-zinc-200"
+      } ${className}`}
     >
-      {isFollowing ? (
-        <span className="group">
-          <span className="group-hover:hidden">Following</span>
-          <span className="hidden group-hover:inline">Unfollow</span>
-        </span>
-      ) : "Follow"}
-    </motion.button>
+      {loading ? (
+        <Loader2 className="w-3 h-3 animate-spin" />
+      ) : isFollowing ? (
+        <>
+          <UserMinus className="w-3 h-3 mr-1.5" /> Unfollow
+        </>
+      ) : (
+        <>
+          <UserPlus className="w-3 h-3 mr-1.5" /> Follow
+        </>
+      )}
+    </Button>
   );
 };

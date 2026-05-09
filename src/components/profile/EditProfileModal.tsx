@@ -1,24 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogFooter 
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { updateProfile } from "@/app/actions/user";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Camera, Skull, Terminal } from "lucide-react";
 import { toast } from "sonner";
-import { Camera, X } from "lucide-react";
+import { updateProfile } from "@/app/actions/user";
+import { useRouter } from "next/navigation";
 
-export const EditProfileModal = ({ user }: { user: any }) => {
-  const [open, setOpen] = useState(false);
+interface EditProfileModalProps {
+  user: any;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const EditProfileModal = ({ user, isOpen, onClose }: EditProfileModalProps) => {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: user.username || "",
     bio: user.bio || "",
@@ -29,114 +36,91 @@ export const EditProfileModal = ({ user }: { user: any }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       await updateProfile(formData);
-      toast.success("Identity updated. Nikita won't recognize you.");
-      setOpen(false);
+      toast.success("Identity updated. Nikita is confused. 💀");
+      onClose();
+      router.refresh();
     } catch (error) {
-      toast.error("System failure. Try again rebel.");
+      toast.error("Failed to update identity. The system is fighting back.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-full font-black uppercase tracking-widest border-white/20 hover:bg-white/5">
-          Edit Profile
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-black border-white/10 text-white p-0 overflow-hidden">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader className="p-4 flex flex-row items-center justify-between border-b border-white/10 bg-black/50 backdrop-blur-xl">
-            <div className="flex items-center gap-4">
-              <Button type="button" variant="ghost" size="icon" onClick={() => setOpen(false)}>
-                <X className="w-5 h-5" />
-              </Button>
-              <DialogTitle className="font-black italic uppercase tracking-tighter text-xl">Edit Profile</DialogTitle>
-            </div>
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="bg-white text-black hover:bg-white/90 rounded-full font-black uppercase tracking-widest text-xs px-6"
-            >
-              Save
-            </Button>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] bg-black border-white/10 p-0 overflow-hidden rounded-[2rem]">
+        <div className="relative h-32 bg-gradient-to-br from-primary/30 to-black">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+          <div className="absolute bottom-4 left-8 flex items-center gap-3">
+            <Terminal className="w-5 h-5 text-primary" />
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Update Manifest</span>
+          </div>
+        </div>
 
-          <div className="space-y-6 pb-8">
-            <div className="h-32 bg-zinc-900 relative group cursor-pointer overflow-hidden">
-              {formData.bannerImage ? (
-                <img src={formData.bannerImage} className="w-full h-full object-cover opacity-50" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-r from-primary/20 to-primary/5 opacity-50" />
-              )}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-white/50 group-hover:text-white transition-colors" />
-              </div>
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="username" className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Handle</Label>
+              <Input
+                id="username"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                placeholder="rebel_name"
+                className="bg-white/[0.03] border-white/10 rounded-xl py-6 font-mono text-white placeholder:text-white/20"
+              />
             </div>
 
-            <div className="px-6 -mt-12 relative z-10">
-              <div className="w-24 h-24 rounded-full border-4 border-black bg-zinc-800 relative group cursor-pointer overflow-hidden">
-                {formData.image ? (
-                  <img src={formData.image} className="w-full h-full object-cover opacity-50" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary font-black italic text-2xl opacity-50">
-                    {formData.username?.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Camera className="w-6 h-6 text-white/50 group-hover:text-white transition-colors" />
+            <div className="grid gap-2">
+              <Label htmlFor="bio" className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Manifesto (Bio)</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                placeholder="What is your cause?"
+                className="bg-white/[0.03] border-white/10 rounded-xl min-h-[100px] font-medium text-white placeholder:text-white/20"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Imagery</Label>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-2">
+                  <Input
+                    placeholder="Avatar URL"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="bg-white/[0.03] border-white/10 rounded-xl font-mono text-xs text-white"
+                  />
+                  <Input
+                    placeholder="Banner URL"
+                    value={formData.bannerImage}
+                    onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
+                    className="bg-white/[0.03] border-white/10 rounded-xl font-mono text-xs text-white"
+                  />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="px-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest text-white/50">Username</Label>
-                <Input 
-                  id="username"
-                  value={formData.username}
-                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                  className="bg-black border-white/10 focus:border-primary text-white font-medium"
-                  placeholder="The_Ungovernable"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio" className="text-xs font-black uppercase tracking-widest text-white/50">Bio / Nikita Crimes</Label>
-                <Textarea 
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  className="bg-black border-white/10 focus:border-primary text-white font-medium h-24 resize-none"
-                  placeholder="I once sent Nikita a 0.0001 SOL tip with a link to my OnlyFans..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="image" className="text-xs font-black uppercase tracking-widest text-white/50">Avatar URL</Label>
-                <Input 
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                  className="bg-black border-white/10 focus:border-primary text-white font-mono text-xs"
-                  placeholder="https://imgur.com/..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bannerImage" className="text-xs font-black uppercase tracking-widest text-white/50">Banner URL</Label>
-                <Input 
-                  id="bannerImage"
-                  value={formData.bannerImage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bannerImage: e.target.value }))}
-                  className="bg-black border-white/10 focus:border-primary text-white font-mono text-xs"
-                  placeholder="https://imgur.com/..."
-                />
-              </div>
-            </div>
+          <div className="flex gap-4 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 bg-white/5 border-white/10 text-white/40 font-black uppercase tracking-widest py-6 rounded-2xl hover:text-white"
+            >
+              Abort
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-primary text-white font-black uppercase tracking-widest py-6 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              {loading ? "SAVING..." : "COMMIT"}
+            </Button>
           </div>
         </form>
       </DialogContent>
