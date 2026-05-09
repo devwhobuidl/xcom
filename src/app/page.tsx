@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { Composer } from "@/components/feed/Composer";
-import { WalletButton } from "@/components/auth/WalletButton";
 import { useSession } from "next-auth/react";
 
 export default function Home() {
