@@ -1,25 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Copy, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
-export const CopyButton = ({ text }: { text: string }) => {
+export function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(value);
     setCopied(true);
-    toast.success("Referral link copied!");
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <button 
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-muted-foreground hover:text-primary"
       onClick={handleCopy}
-      className="bg-white text-black p-3 rounded-xl hover:bg-zinc-200 transition-all active:scale-95"
     >
-      {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-    </button>
+      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+    </Button>
   );
-};
+}
