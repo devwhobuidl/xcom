@@ -1,11 +1,246 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { awardPoints } from "@/lib/points";
 
-export async function createCommunity(data: { name: string; slug: string; description?: string; avatar?: string; banner?: string }) {
+export async function createPost(content: string, imageUrl?: string, parentId?: string, communityId?: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) throw new Error("Unauthorized");
+
+    const user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const post = await prisma.post.create({
+      data: {
+        content: content.trim(),
+        imageUrl,
+        authorId: user.id,
+        parentId: parentId || null,
+        communityId: communityId || null,
+      },
+      include: { 
+        parent: {
+          include: { author: true }
+        }
+      }
+    });
+
+    if (parentId && post.parent?.authorId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          type: "REPLY",
+          userId: post.parent!.authorId,
+          issuerId: user.id,
+          postId: post.id,
+        },
+      });
+    }
+
+    await awardPoints(user.id, parentId ? "REPLY" : "POST");
+
+    revalidatePath("/");
+    return { success: true, post };
+  } catch (error: any) {
+    console.error("CREATE_POST_ERROR:", error);
+    throw error;
+  }
+}
+
+export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  try {
+    const reaction = await prisma.reaction.create({
+      data: {
+        postId,
+        userId: user.id,
+        type,
+      },
+      include: { post: true }
+    });
+
+    if (reaction.post.authorId !== user.id) {
+      await prisma.notification.create({
+        data: {
+          type: type === "LIKE" ? "LIKE" : "REPOST",
+          userId: reaction.post.authorId,
+          issuerId: user.id,
+          postId,
+        },
+      });
+    }
+
+    await awardPoints(user.id, "REACTION");
+  } catch (e) {
+    await prisma.reaction.deleteMany({
+      where: {
+        postId,
+        userId: user.id,
+        type,
+      }
+    });
+  }
+
+  revalidatePath("/");
+}
+
+export async function followUser(followingId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+  if (user.id === followingId) throw new Error("Cannot follow yourself");
+
+  await prisma.follow.create({
+    data: {
+      followerId: user.id,
+      followingId,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      type: "FOLLOW",
+      userId: followingId,
+      issuerId: user.id,
+    },
+  });
+
+  await awardPoints(user.id, "FOLLOW");
+
+  revalidatePath(`/profile/${followingId}`);
+  revalidatePath("/");
+}
+
+export async function unfollowUser(followingId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  await prisma.follow.delete({
+    where: {
+      followerId_followingId: {
+        followerId: user.id,
+        followingId,
+      },
+    },
+  });
+
+  revalidatePath(`/profile/${followingId}`);
+  revalidatePath("/");
+}
+
+export async function updateProfile(data: { username?: string; bio?: string; image?: string; bannerImage?: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data,
+  });
+
+  revalidatePath(`/profile/${updated.username || updated.id}`);
+  revalidatePath("/");
+  return updated;
+}
+
+export async function getNotifications() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return [];
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  return await prisma.notification.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      issuer: {
+        select: {
+          id: true,
+          username: true,
+          image: true,
+          walletAddress: true,
+        }
+      },
+      post: {
+        select: {
+          id: true,
+          content: true,
+        }
+      }
+    }
+  });
+}
+
+export async function markNotificationsAsRead() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: (session.user as any).id },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  await prisma.notification.updateMany({
+    where: { userId: user.id, read: false },
+    data: { read: true },
+  });
+
+  revalidatePath("/notifications");
+}
+
+export async function deletePost(postId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  await prisma.post.delete({
+    where: { id: postId }
+  });
+
+  revalidatePath("/");
+}
+
+export async function getCommunities() {
+  return await prisma.community.findMany({
+    orderBy: { memberCount: "desc" },
+  });
+}
+
+export async function createCommunity(data: { name: string, slug: string, description?: string, avatar?: string, banner?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new Error("Unauthorized");
 
