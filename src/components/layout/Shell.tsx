@@ -1,155 +1,185 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
+  Skull, 
   Home, 
   Search, 
   Bell, 
   Mail, 
-  Bookmark, 
   User, 
-  MoreHorizontal, 
-  Skull,
-  TrendingUp,
-  MessageSquare,
-  Shield,
+  Shield, 
+  Settings,
+  MoreHorizontal,
+  Flame,
   LayoutGrid,
   Trophy,
-  History,
-  Settings
+  Zap,
+  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WalletButton } from "@/components/auth/WalletButton";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChaosPassModal } from "./ChaosPassModal";
-import { CreatePost } from "../feed/CreatePost";
-import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
-const NAV_ITEMS = [
-  { icon: Home, label: "Home", href: "/" },
-  { icon: Search, label: "Explore", href: "/trending" },
-  { icon: Bell, label: "Notifications", href: "/notifications" },
-  { icon: MessageSquare, label: "Messages", href: "/messages" },
-  { icon: Bookmark, label: "Bookmarks", href: "/bookmarks" },
-  { icon: History, label: "History", href: "/more" },
-  { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
-  { icon: User, label: "Profile", href: "/profile" },
-];
+interface ShellProps {
+  children: React.ReactNode;
+  rightSidebar?: React.ReactNode;
+}
 
-const QUICK_LINKS = [
-  { icon: LayoutGrid, label: "Communities", href: "/communities" },
-  { icon: Settings, label: "Settings", href: "/more" },
-];
-
-export function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({ children, rightSidebar }: ShellProps) {
   const pathname = usePathname();
-  const [isPostOpen, setIsPostOpen] = useState(false);
+  const { data: session } = useSession();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [chaosPassOpen, setChaosPassOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navigation = [
+    { name: "THE PIT", href: "/", icon: Home },
+    { name: "SQUAD", href: "/communities", icon: LayoutGrid },
+    { name: "RANK", href: "/leaderboard", icon: Trophy },
+    { name: "CHAOS", href: "/notifications", icon: Bell },
+    { name: "PROFILE", href: `/profile/${session?.user?.id || 'me'}`, icon: User },
+    { name: "INTEL", href: "/settings", icon: Settings },
+  ];
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-primary selection:text-white">
+    <div className="min-h-screen bg-black text-zinc-100 selection:bg-red-600/30 selection:text-white">
       {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[150px] opacity-20 -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] opacity-10 translate-y-1/2 -translate-x-1/2" />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-900/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-zinc-900/20 blur-[120px] rounded-full" />
       </div>
 
-      <div className="max-w-[1400px] mx-auto flex min-h-screen relative z-10">
+      <div className="max-w-[1300px] mx-auto flex justify-center">
         {/* Left Sidebar */}
-        <aside className="w-20 xl:w-[300px] flex flex-col h-screen sticky top-0 border-r border-white/5 px-2 xl:px-4 py-6 bg-black/50 backdrop-blur-sm">
-          <div className="flex flex-col h-full">
-            {/* Logo */}
-            <Link href="/" className="group flex items-center gap-3 px-4 mb-8">
-              <motion.div 
-                whileHover={{ rotate: [0, -10, 10, 0] }}
-                className="w-12 h-12 bg-primary flex items-center justify-center rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.4)] transition-all group-hover:scale-110"
-              >
-                <Skull className="w-7 h-7 text-white" />
-              </motion.div>
-              <span className="hidden xl:block text-2xl font-black italic tracking-tighter text-white group-hover:nikita-glitch">
-                XCOM
-              </span>
-            </Link>
+        <header className="hidden sm:flex flex-col sticky top-0 h-screen w-20 xl:w-[275px] shrink-0 pr-4 py-4 overflow-y-auto">
+          <Link href="/" className="mb-8 px-4 flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-red-600 flex items-center justify-center rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.3)] group-hover:scale-110 transition-all duration-300 rotate-[-5deg]">
+              <Skull className="w-7 h-7 text-white" />
+            </div>
+            <div className="hidden xl:block">
+              <h1 className="text-xl font-black italic tracking-tighter leading-none">XCOM</h1>
+              <p className="text-[10px] text-red-500 font-bold tracking-[0.2em]">REBELLION</p>
+            </div>
+          </Link>
 
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1">
-              {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group",
-                      isActive 
-                        ? "bg-white/5 text-primary border border-white/5 shadow-xl" 
-                        : "text-white/40 hover:text-white hover:bg-white/[0.02]"
-                    )}
-                  >
-                    <item.icon className={cn(
-                      "w-6 h-6 transition-transform duration-500",
-                      isActive ? "scale-110" : "group-hover:scale-110 group-hover:rotate-6"
-                    )} />
-                    <span className={cn(
-                      "hidden xl:block font-black uppercase tracking-[0.15em] text-xs",
-                      isActive ? "text-primary" : ""
-                    )}>
-                      {item.label}
-                    </span>
-                    {isActive && (
-                      <motion.div 
-                        layoutId="nav-glow"
-                        className="absolute right-0 w-1 h-6 bg-primary rounded-full blur-[2px] hidden xl:block"
-                      />
-                    )}
-                  </Link>
-                );
-              })}
-
-              <div className="my-6 border-t border-white/5 mx-4" />
-
-              {QUICK_LINKS.map((item) => (
+          <nav className="flex-1 space-y-2">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
                 <Link
-                  key={item.label}
+                  key={item.name}
                   href={item.href}
-                  className="flex items-center gap-4 px-4 py-3 rounded-2xl text-white/30 hover:text-white hover:bg-white/[0.02] transition-all group"
+                  className={cn(
+                    "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group relative",
+                    isActive 
+                      ? "bg-zinc-900 text-white shadow-lg shadow-black/50" 
+                      : "text-zinc-500 hover:bg-zinc-900/50 hover:text-white"
+                  )}
                 >
-                  <item.icon className="w-5 h-5 group-hover:scale-110 group-hover:rotate-6" />
-                  <span className="hidden xl:block font-bold uppercase tracking-widest text-[10px]">
-                    {item.label}
+                  {isActive && <div className="absolute left-0 w-1 h-6 bg-red-600 rounded-full" />}
+                  <item.icon className={cn("w-6 h-6", isActive && "text-red-600")} />
+                  <span className={cn(
+                    "hidden xl:block font-black tracking-tight text-lg uppercase italic",
+                    isActive && "italic"
+                  )}>
+                    {item.name}
                   </span>
                 </Link>
-              ))}
-            </nav>
+              );
+            })}
 
-            {/* Action Buttons */}
-            <div className="space-y-4 pt-6">
-              <Button 
-                onClick={() => setIsPostOpen(true)}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-7 rounded-2xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all active:scale-95 flex items-center justify-center gap-2 group"
-              >
-                <TrendingUp className="w-5 h-5 hidden xl:block group-hover:rotate-12 transition-transform" />
-                <span className="hidden xl:block uppercase tracking-widest text-xs">Mobilize</span>
-                <TrendingUp className="w-6 h-6 xl:hidden" />
-              </Button>
-              
-              <div className="px-2 xl:px-0">
-                <WalletButton />
+            <button
+              onClick={() => setChaosPassOpen(true)}
+              className="w-full mt-8 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(220,38,38,0.2)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
+            >
+              <Zap className="w-5 h-5 fill-white group-hover:animate-bounce" />
+              <span className="hidden xl:block font-black uppercase italic tracking-tight">Chaos Pass</span>
+            </button>
+          </nav>
+
+          <div className="mt-auto px-2">
+            {session ? (
+              <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer">
+                <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
+                  <AvatarImage src={session.user?.image || ""} />
+                  <AvatarFallback className="bg-zinc-800 text-[10px] font-black">
+                    {session.user?.name?.slice(0, 2).toUpperCase() || "RE"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden xl:block flex-1 min-w-0">
+                  <p className="text-sm font-black truncate">{session.user?.name || "REBEL"}</p>
+                  <p className="text-[10px] text-zinc-500 font-mono font-bold truncate">
+                    {session.user?.walletAddress?.slice(0, 4)}...{session.user?.walletAddress?.slice(-4)}
+                  </p>
+                </div>
+                <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600" />
               </div>
-
-              <ChaosPassModal />
-            </div>
+            ) : (
+              <Button 
+                onClick={() => setChaosPassOpen(true)}
+                className="w-full rounded-2xl font-black uppercase italic tracking-tight"
+              >
+                JOIN REBELLION
+              </Button>
+            )}
           </div>
-        </aside>
+        </header>
 
-        {/* Main Content */}
-        <main className="flex-1 min-w-0 flex">
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-[600px] border-x border-white/5 min-h-screen relative bg-zinc-950/20 backdrop-blur-3xl">
           {children}
         </main>
+
+        {/* Right Sidebar */}
+        <aside className="hidden lg:flex flex-col sticky top-0 h-screen w-[350px] shrink-0 pl-8 py-4 gap-6 overflow-y-auto">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-red-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="SEARCH THE PIT..." 
+              className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:bg-zinc-900 transition-all placeholder:text-zinc-700 uppercase italic tracking-tight"
+            />
+          </div>
+
+          {rightSidebar}
+
+          <footer className="mt-auto py-4 px-2">
+            <nav className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest italic">
+              <Link href="#" className="hover:text-zinc-400">MANIFESTO</Link>
+              <Link href="#" className="hover:text-zinc-400">RULES</Link>
+              <Link href="#" className="hover:text-zinc-400">INTEL</Link>
+              <Link href="#" className="hover:text-zinc-400">REBELLION © 2024</Link>
+            </nav>
+          </footer>
+        </aside>
       </div>
 
-      <CreatePost isOpen={isPostOpen} setIsOpen={setIsPostOpen} />
+      {/* Mobile Nav */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-50">
+        <Link href="/" className="p-2 text-zinc-500 hover:text-white"><Home className="w-6 h-6" /></Link>
+        <Link href="/communities" className="p-2 text-zinc-500 hover:text-white"><LayoutGrid className="w-6 h-6" /></Link>
+        <div className="p-1 bg-red-600 rounded-full -mt-10 shadow-lg shadow-red-600/30 ring-4 ring-black">
+          <Button size="icon" className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700">
+            <Plus className="w-6 h-6 text-white" />
+          </Button>
+        </div>
+        <Link href="/notifications" className="p-2 text-zinc-500 hover:text-white"><Bell className="w-6 h-6" /></Link>
+        <Link href={`/profile/${session?.user?.id || 'me'}`} className="p-2 text-zinc-500 hover:text-white"><User className="w-6 h-6" /></Link>
+      </nav>
+
+      <ChaosPassModal open={chaosPassOpen} onOpenChange={setChaosPassOpen} />
     </div>
   );
 }
