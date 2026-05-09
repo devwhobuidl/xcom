@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String             @id @default(cuid())
+  name          String?
+  email         String?            @unique
+  emailVerified DateTime?
+  image         String?
+  username      String?            @unique
+  bio           String?
+  points        Int                @default(0)
+  walletAddress String?            @unique
+  createdAt     DateTime           @default(now())
+  accounts      Account[]
+  sessions      Session[]
+  followers     Follow[]           @relation("following")
+  following     Follow[]           @relation("follower")
+  posts         Post[]
+  reactions     Reaction[]
+  communities   CommunityMember[]
+  notifications Notification[]     @relation("NotificationRecipient")
+  issuedNotifications Notification[] @relation("NotificationIssuer")
+  transactions  PointTransaction[]
+  bookmarks     Bookmark[]
+  messages      ChatMessage[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatChannel {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  messages    ChatMessage[]
+  createdAt   DateTime      @default(now())
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  content   String
+  imageUrl  String?
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id])
+  createdAt DateTime    @default(now())
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  following   User     @relation("following", fields: [followingId], references: [id])
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Post {
+  id            String         @id @default(cuid())
+  content       String
+  imageUrl      String?
+  authorId      String
+  createdAt     DateTime       @default(now())
+  parentId      String?
+  bookmarks     Bookmark[]
+  notifications Notification[]
+  parent        Post?          @relation("Replies", fields: [parentId], references: [id])
+  replies       Post[]         @relation("Replies")
+  author        User           @relation(fields: [authorId], references: [id])
+  reactions     Reaction[]
+  communityId   String?
+  community     Community?     @relation(fields: [communityId], references: [id])
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  banner      String?
+  avatar      String?
+  memberCount Int      @default(0)
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  members     CommunityMember[]
+  posts       Post[]
+}
+
+model CommunityMember {
+  id          String    @id @default(cuid())
+  userId      String
+  communityId String
+  role        String    @default("member") // member, admin
+  joinedAt    DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id])
+}
+
+model Reaction {
+  id     String       @id @default(cuid())
+  type   ReactionType
+  postId String
+  userId String
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, type])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  userId    String
+  issuerId  String
+  postId    String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  post      Post?            @relation(fields: [postId], references: [id])
+  user      User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  issuer    User             @relation("NotificationIssuer", fields: [issuerId], references: [id])
+}
+
+model PointTransaction {
+  id        String   @id @default(cuid())
+  amount    Int
+  reason    String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AirdropLog {
+  id             String   @id @default(cuid())
+  amount         Float
+  recipientCount Int
+  signature      String
+  createdAt      DateTime @default(now())
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+enum ReactionType {
+  LIKE
+  FUCK_YOU
+  REPOST
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  REPLY
+  REPOST
+  AIRDROP
+}
