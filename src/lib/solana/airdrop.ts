@@ -16,7 +16,6 @@ export async function processDailyAirdrop() {
     bs58.decode(process.env.TREASURY_SECRET_KEY)
   );
 
-  // 1. Get active users with points > 0
   const activeUsers = await prisma.user.findMany({
     where: { points: { gt: 0 } },
     select: { id: true, walletAddress: true, points: true }
@@ -25,23 +24,19 @@ export async function processDailyAirdrop() {
   if (activeUsers.length === 0) return { success: true, message: "No active users to drop to." };
 
   const totalPoints = activeUsers.reduce((sum, u) => sum + u.points, 0);
-  const totalDropAmount = 1000000; // 1M XCOM tokens total for the drop
+  const totalDropAmount = 1000000;
 
   console.log(`Starting airdrop for ${activeUsers.length} users. Total points: ${totalPoints}`);
 
   let successfulDrops = 0;
   let totalDropped = 0;
 
-  // Process in small batches to avoid transaction limits
   for (const user of activeUsers) {
     try {
       const recipientPubKey = new PublicKey(user.walletAddress);
       const amountPerUser = Math.floor((user.points / totalPoints) * totalDropAmount);
       
       if (amountPerUser <= 0) continue;
-
-      // In a real production app, you'd batch multiple transfers into one transaction
-      // But for the rebellion, we keep it simple for now
       
       const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
@@ -73,7 +68,6 @@ export async function processDailyAirdrop() {
       successfulDrops++;
       totalDropped += amountPerUser;
 
-      // Log the successful drop in background
       await prisma.airdropLog.create({
         data: {
           amount: amountPerUser,
@@ -82,7 +76,6 @@ export async function processDailyAirdrop() {
         }
       });
 
-      // Reset user points after successful drop
       await prisma.user.update({
         where: { id: user.id },
         data: { points: 0 }

@@ -105,8 +105,6 @@ export const authOptions: NextAuthOptions = {
             };
           } catch (dbError: any) {
             console.error("🚨 Database error during auth:", dbError.message);
-            // We return null so NextAuth handles it as a sign-in failure, 
-            // but the server log will show the real reason.
             return null;
           }
         } catch (e: any) {
@@ -159,12 +157,6 @@ export const authOptions: NextAuthOptions = {
           const twitterId = user.id;
           const username = (profile as any).data?.username || profile?.name;
           const image = user.image;
-
-          // Check if user exists by twitterId (we'll use walletAddress as a placeholder or add a twitterId field)
-          // For now, let's look by walletAddress if it exists, or create a new user.
-          // IMPORTANT: The schema currently uses walletAddress as unique.
-          // If they login with Twitter, they might not have a wallet yet.
-          // Let's use the twitterId as a pseudo-walletAddress or add a field.
           
           let dbUser = await prisma.user.findUnique({
             where: { walletAddress: `twitter:${twitterId}` },
@@ -184,7 +176,6 @@ export const authOptions: NextAuthOptions = {
             });
           }
 
-          // Attach the DB id to the user object so it's available in the jwt callback
           (user as any).dbId = dbUser.id;
           (user as any).walletAddress = dbUser.walletAddress;
           return true;
