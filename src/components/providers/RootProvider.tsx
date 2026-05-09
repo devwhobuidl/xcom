@@ -1,17 +1,16 @@
 "use client";
 
-import { FC, ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { WalletProvider } from "./WalletProvider";
 import { Toaster } from "@/components/ui/sonner";
 
-export const RootProvider: FC<{ children: ReactNode }> = ({ children }) => {
+export function RootProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <WalletProvider>
         {children}
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster theme="dark" position="bottom-right" closeButton />
       </WalletProvider>
     </SessionProvider>
   );
-};
+}

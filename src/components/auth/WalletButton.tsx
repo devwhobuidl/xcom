@@ -1,78 +1,121 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { useEffect, useState } from "react";
-import { signIn, useSession, signOut } from "next-auth/react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Wallet } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import bs58 from "bs58";
+import { Wallet, LogOut, Loader2, Twitter } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-export const WalletButton = () => {
-  const { publicKey, connected } = useWallet();
+export function WalletButton() {
+  const { publicKey, signMessage, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
   const { data: session, status } = useSession();
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (connected && publicKey && status === "unauthenticated") {
-      // Auto sign-in if wallet is connected but no session
-      // In a real app, you'd want to handle message signing here for security
-      signIn("credentials", {
-        username: publicKey.toBase58(),
-        password: "wallet-auth-placeholder", // Security: implement message signing
-        callbackUrl: window.location.origin,
-      });
+    if (publicKey && status === "unauthenticated" && !loading) {
+      handleSignIn();
     }
-  }, [connected, publicKey, status]);
+  }, [publicKey, status]);
 
-  if (!mounted) return null;
+  const handleSignIn = async () => {
+    if (!publicKey || !signMessage) return;
+
+    try {
+      setLoading(true);
+      const message = `Sign this message to log in to XCOM Rebellion.\n\nNonce: ${Date.now()}`;
+      const encodedMessage = new TextEncoder().encode(message);
+      const signature = await signMessage(encodedMessage);
+      const signatureBase58 = bs58.encode(signature);
+
+      const result = await signIn("credentials", {
+        message: message,
+        signature: signatureBase58,
+        publicKey: publicKey.toBase58(),
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast.error("Authentication failed: " + result.error);
+        disconnect();
+      } else {
+        toast.success("Joined the rebellion");
+      }
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      toast.error(error.message || "Failed to sign message");
+      disconnect();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTwitterSignIn = () => {
+    signIn("twitter");
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    await disconnect();
+    toast.info("Left the base");
+  };
+
+  if (status === "loading" || loading) {
+    return (
+      <Button disabled variant="outline" className="gap-2 border-primary/30 bg-primary/5 text-primary">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        SECURE LINK...
+      </Button>
+    );
+  }
 
   if (session?.user) {
+    const isTwitter = session.user.walletAddress?.startsWith("twitter:");
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-white/10 p-0 overflow-hidden group">
-            <Avatar className="h-full w-full">
-              <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
-              <AvatarFallback className="bg-zinc-800 text-[10px] font-black uppercase text-white/40">
-                {session.user.name?.slice(0, 2) || "RE"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-               <User className="w-4 h-4 text-white" />
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-zinc-950 border-white/10 text-white">
-          <DropdownMenuItem onClick={() => window.location.href = "/profile"} className="cursor-pointer hover:bg-white/5">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer text-red-500 hover:bg-red-500/10 hover:text-red-400">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Disconnect</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="hidden border-primary/20 bg-primary/5 text-primary/70 md:flex">
+          {isTwitter ? "TWITTER REBEL" : "SOLANA REBEL"}
+        </Badge>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="gap-2 border-white/10 bg-black/40 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50"
+          onClick={handleSignOut}
+        >
+          {isTwitter ? <Twitter className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
+          <span className="hidden sm:inline">
+            {session.user.name?.slice(0, 8)}
+          </span>
+          <LogOut className="h-3 w-3 opacity-50" />
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-zinc-600 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-      <WalletMultiButton 
-        className="!bg-black !h-10 !px-6 !rounded-lg !border !border-white/20 !font-black !text-[12px] !uppercase !tracking-widest hover:!border-white/40 transition-all !font-sans"
-      />
+    <div className="flex gap-2">
+      <Button 
+        variant="outline"
+        size="sm"
+        className="gap-2 border-white/10 bg-black/40 hover:bg-blue-400/10 hover:text-blue-400 hover:border-blue-400/50"
+        onClick={handleTwitterSignIn}
+      >
+        <Twitter className="h-4 w-4" />
+        <span className="hidden sm:inline">TWITTER</span>
+      </Button>
+      <Button 
+        variant="primary"
+        size="sm"
+        className="gap-2"
+        onClick={() => setVisible(true)}
+      >
+        <Wallet className="h-4 w-4" />
+        <span className="hidden sm:inline">CONNECT</span>
+      </Button>
     </div>
   );
-};
+}
