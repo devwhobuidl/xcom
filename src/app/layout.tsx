@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-import { Shell } from "@/components/layout/Shell";
-import { AuthProvider } from "@/components/providers/AuthProvider";
-import { Toaster } from "@/components/ui/sonner";
+import { RootProvider } from "@/components/providers/RootProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,11 +13,11 @@ const robotoMono = Roboto_Mono({
   variable: "--font-roboto-mono",
 });
 
+import { Shell } from "@/components/layout/Shell";
+
 export const metadata: Metadata = {
-  title: "XCOM | The Rebel Pit",
-  description: "Join the XCOM rebellion against Nikita. Roast, earn $XCOM, and reclaim the pit.",
-  keywords: ["XCOM", "Solana", "Rebellion", "Meme", "Crypto", "Nikita"],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  title: "xcommunity.fun | The $XCOM Rebellion",
+  description: "Official home of the $XCOM community. Fuck You Nikita.",
 };
 
 export default function RootLayout({
@@ -29,17 +27,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} font-sans antialiased bg-black text-white selection:bg-primary/30 selection:text-white overflow-hidden`}>
-        <AuthProvider>
+      <body
+        className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen overflow-x-hidden`}
+      >
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.05),transparent_70%)]" />
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/20 animate-scanline opacity-30" />
+        </div>
+        <RootProvider>
           <Shell>{children}</Shell>
-          <Toaster 
-            theme="dark" 
-            position="bottom-right" 
-            toastOptions={{
-              className: "bg-black border border-white/10 text-white font-sans",
-            }}
-          />
-        </AuthProvider>
+        </RootProvider>
       </body>
     </html>
   );

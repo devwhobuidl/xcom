@@ -1,27 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { Composer } from "@/components/feed/Composer";
-import { RebellionHero } from "@/components/hero/RebellionHero";
+import { WalletButton } from "@/components/auth/WalletButton";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
 
-  if (!session) {
-    return <RebellionHero />;
-  }
-
   return (
-    <div className="flex flex-col h-full bg-black">
-      <div className="flex flex-col min-h-screen">
-        {/* Header Tabs */}
-        <div className="sticky top-0 z-10 glass border-b border-white/5">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-black italic uppercase tracking-tighter text-white">The Pit</h1>
+    <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col">
+        <div className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/5">
+          <div className="px-6 py-4 flex justify-between items-center">
+            <div className="flex flex-col">
+              <h2 className="text-xl font-black italic tracking-tighter leading-none opacity-0 select-none">$XCOM</h2>
+            </div>
+            {!session && (
+              <div className="inline-block bg-primary/10 border border-primary/20 px-3 py-1 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.15)]">
+                <span className="text-[10px] font-black tracking-widest uppercase text-primary animate-pulse">Public Rebellion</span>
+              </div>
+            )}
           </div>
           <div className="flex border-t border-white/5">
             <button 

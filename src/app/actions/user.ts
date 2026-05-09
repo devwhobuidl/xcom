@@ -53,6 +53,7 @@ export async function getUserStats() {
     where: { post: { authorId: userId }, type: "FUCK_YOU" }
   });
 
+  const allUsersCount = await prisma.user.count();
   const higherPointUsers = await prisma.user.count({
     where: { points: { gt: user.points } }
   });
@@ -68,7 +69,7 @@ export async function getUserStats() {
       replies: totalReplies,
       roastsGiven: totalRoastsGiven,
       roastsReceived: totalRoastsReceived,
-      totalUsers: await prisma.user.count(),
+      totalUsers: allUsersCount,
     },
     recentActivity: user.posts,
   };

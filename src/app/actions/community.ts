@@ -4,75 +4,44 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { awardPoints, POINTS_CONFIG } from "@/lib/points";
 
-export async function createPost(content: string, communityId?: string, parentId?: string) {
+export async function createCommunity(data: { name: string; slug: string; description?: string; avatar?: string; banner?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new Error("Unauthorized");
 
   const userId = (session.user as any).id;
+  const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
-  try {
-    const post = await prisma.post.create({
-      data: {
-        content,
-        authorId: userId,
-        communityId,
-        parentId,
+  const existing = await prisma.community.findUnique({ where: { slug } });
+  if (existing) throw new Error("Slug already taken");
+
+  const community = await prisma.community.create({
+    data: {
+      ...data,
+      slug,
+      memberCount: 1,
+      members: {
+        create: {
+          userId,
+          role: "admin"
+        }
       }
-    });
+    }
+  });
 
-    // Award points
-    await awardPoints(userId, parentId ? POINTS_CONFIG.REPLY : POINTS_CONFIG.POST);
-
-    revalidatePath("/");
-    if (communityId) revalidatePath(`/community/${communityId}`);
-    if (parentId) revalidatePath(`/status/${parentId}`);
-    
-    return post;
-  } catch (e) {
-    console.error("CREATE_POST_ERROR:", e);
-    throw e;
-  }
+  revalidatePath("/communities");
+  return community;
 }
 
-export async function reactToPost(postId: string, type: "FUCK_YOU" | "HATE" | "BASED" | "L") {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
-
-  const userId = (session.user as any).id;
-
-  try {
-    const existing = await prisma.reaction.findUnique({
-      where: {
-        userId_postId: { userId, postId }
+export async function getCommunityBySlug(slug: string) {
+  return await prisma.community.findUnique({
+    where: { slug },
+    include: {
+      _count: {
+        select: { members: true, posts: true }
       }
-    });
-
-    if (existing) {
-      if (existing.type === type) {
-        await prisma.reaction.delete({ where: { id: existing.id } });
-      } else {
-        await prisma.reaction.update({
-          where: { id: existing.id },
-          data: { type }
-        });
-      }
-    } else {
-      await prisma.reaction.create({
-        data: { userId, postId, type }
-      });
-      // Award points for reacting
-      await awardPoints(userId, POINTS_CONFIG.REACTION);
     }
-
-    revalidatePath("/");
-    revalidatePath(`/status/${postId}`);
-    return { success: true };
-  } catch (e) {
-    console.error("REACTION_ERROR:", e);
-    return { success: false };
-  }
+  });
 }
 
 export async function joinCommunity(communityId: string) {
@@ -161,7 +130,6 @@ export async function getPosts(page: number = 0, filter: "for-you" | "following"
       include: { following: true }
     });
     followingIds = user?.following.map(f => f.followingId) || [];
-    
     if (followingIds.length === 0) return [];
   }
 
