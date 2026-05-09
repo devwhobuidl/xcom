@@ -80,9 +80,9 @@ export const NotificationsPreview = () => {
                 </div>
               </div>
               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="text-[12px] text-white/60 leading-tight truncate group-hover/notif:text-white transition-colors">
+                <div className="text-[12px] text-white/60 leading-tight truncate group-hover/notif:text-white transition-colors">
                   {getContent(notif)}
-                </p>
+                </div>
                 <p className="text-[9px] text-white/20 font-black mt-1 uppercase tracking-widest font-mono">
                   {formatDistanceToNow(new Date(notif.createdAt))} ago
                 </p>
