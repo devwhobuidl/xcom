@@ -99,7 +99,9 @@ export async function getLeaderboard() {
     });
 
     return users.map((user, index) => ({
-      wallet: `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`,
+      wallet: user.walletAddress 
+        ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`
+        : (user.username || "ANON"),
       username: user.username,
       points: user.points,
       rank: index + 1,

@@ -42,13 +42,13 @@ export default async function LeaderboardPage() {
             <Avatar className="w-12 h-12 border border-white/10">
               <AvatarImage src={hater.image || ""} />
               <AvatarFallback className="bg-secondary text-primary font-bold">
-                {hater.username?.slice(0, 2) || hater.walletAddress.slice(0, 2)}
+                {hater.username?.slice(0, 2) || (hater.walletAddress ? hater.walletAddress.slice(0, 2) : "RB")}
               </AvatarFallback>
             </Avatar>
 
             <div className="flex-1">
               <div className="font-bold text-lg">
-                {hater.username || `${hater.walletAddress.slice(0, 4)}...${hater.walletAddress.slice(-4)}`}
+                {hater.username || (hater.walletAddress ? `${hater.walletAddress.slice(0, 4)}...${hater.walletAddress.slice(-4)}` : "ANON")}
               </div>
               <div className="text-xs text-white/40 font-mono uppercase">
                 {hater._count.posts} Roasts Published

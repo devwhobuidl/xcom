@@ -16,7 +16,7 @@ export default async function ProfilePage() {
   let user = null;
   try {
     user = await prisma.user.findUnique({
-      where: { walletAddress: (session.user as any).walletAddress },
+      where: { id: (session.user as any).id },
       include: {
         posts: {
           take: 20,
@@ -53,9 +53,9 @@ export default async function ProfilePage() {
       <div className="mt-4 px-6 space-y-6">
         <div>
           <h2 className="text-2xl font-black italic uppercase tracking-tighter">
-            {user.username || `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`}
+            {user.username || (user.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "REBEL")}
           </h2>
-          <p className="text-white/40 font-mono text-sm">{user.walletAddress.slice(0, 8)}...</p>
+          <p className="text-white/40 font-mono text-sm">{user.walletAddress ? `${user.walletAddress.slice(0, 8)}...` : "NO WALLET LINKED"}</p>
         </div>
 
         {user.bio && (
@@ -123,8 +123,8 @@ export default async function ProfilePage() {
           </div>
 
           <div className="divide-y divide-white/5">
-            {user.posts.map((post) => (
-              <PostCard key={post.id} post={post as any} currentUserId={user.id} />
+            {user.posts.map((post: any) => (
+              <PostCard key={post.id} post={post} currentUserId={user.id} />
             ))}
             {user.posts.length === 0 && (
               <div className="py-20 text-center text-white/20 italic font-mono">

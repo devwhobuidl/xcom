@@ -3,18 +3,33 @@ export const dynamic = 'force-dynamic';
 import { Users, Plus, Hash, Search, Zap } from "lucide-react";
 import Link from "next/link";
 import { CommunityCard } from "@/components/communities/CommunityCard";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export default async function CommunitiesPage() {
   let communities: any[] = [];
+  let joinedCommunityIds: Set<string> = new Set();
+
   try {
-    communities = await prisma.community.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: {
-          select: { members: true, posts: true }
+    const session = await getServerSession(authOptions);
+    
+    const [allCommunities, joined] = await Promise.all([
+      prisma.community.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: {
+            select: { members: true, posts: true }
+          }
         }
-      }
-    });
+      }),
+      session?.user ? prisma.communityMember.findMany({
+        where: { userId: (session.user as any).id },
+        select: { communityId: true }
+      }) : Promise.resolve([])
+    ]);
+
+    communities = allCommunities;
+    joinedCommunityIds = new Set(joined.map(j => j.communityId));
   } catch (error) {
     console.error("COMMUNITIES_PAGE_FETCH_ERROR:", error);
   }
@@ -65,6 +80,7 @@ export default async function CommunitiesPage() {
         {communities.map((community) => (
           <CommunityCard 
             key={community.id} 
+            isJoined={joinedCommunityIds.has(community.id)}
             community={{
               ...community,
               memberCount: community._count?.members || 0

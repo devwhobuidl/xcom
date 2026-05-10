@@ -48,11 +48,11 @@ export function Shell({ children, rightSidebar }: ShellProps) {
   const navigation = [
     { name: "THE PIT", href: "/", icon: Home },
     { name: "SQUAD", href: "/communities", icon: LayoutGrid },
-    { name: "CHAT", href: "/chat", icon: Mail },
+    { name: "CHAT", href: "/chat", icon: MessageCircle },
     { name: "RANK", href: "/leaderboard", icon: Trophy },
     { name: "CHAOS", href: "/notifications", icon: Bell },
     { name: "PROFILE", href: `/profile/${session?.user?.id || 'me'}`, icon: User },
-    { name: "INTEL", href: "/settings", icon: Settings },
+    { name: "INTEL", href: "/settings", icon: Shield },
   ];
 
   return (
@@ -167,12 +167,14 @@ export function Shell({ children, rightSidebar }: ShellProps) {
       </div>
 
       {/* Mobile Nav */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-50">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-2 z-50">
         <Link href="/" className="p-2 text-zinc-500 hover:text-white"><Home className="w-6 h-6" /></Link>
         <Link href="/communities" className="p-2 text-zinc-500 hover:text-white"><LayoutGrid className="w-6 h-6" /></Link>
         <div className="p-1 bg-red-600 rounded-full -mt-10 shadow-lg shadow-red-600/30 ring-4 ring-black">
-          <Button size="icon" className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700">
-            <Plus className="w-6 h-6 text-white" />
+          <Button size="icon" className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700" asChild>
+            <Link href="/communities/create">
+              <Plus className="w-6 h-6 text-white" />
+            </Link>
           </Button>
         </div>
         <Link href="/chat" className="p-2 text-zinc-500 hover:text-white"><MessageCircle className="w-6 h-6" /></Link>

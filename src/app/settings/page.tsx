@@ -32,7 +32,7 @@ export default async function SettingsPage() {
       description: "Manage your profile identity and public persona.",
       items: [
         { label: "Username", value: user.username || "Not set", action: "Change" },
-        { label: "Wallet", value: `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`, action: "Copy" },
+        { label: "Wallet", value: user.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Not linked", action: user.walletAddress ? "Copy" : "Link" },
         { label: "Bio", value: user.bio || "No bio set", action: "Edit" },
       ]
     },

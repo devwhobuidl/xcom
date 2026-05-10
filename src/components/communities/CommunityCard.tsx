@@ -1,10 +1,14 @@
 "use client";
 
-import React from "react";
-import { Users, ChevronRight, Skull, Zap, Flame, Shield, Target } from "lucide-react";
+import React, { useState } from "react";
+import { Users, ChevronRight, Skull, Zap, Flame, Shield, Target, Plus, Minus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { joinCommunity, leaveCommunity } from "@/app/actions/community";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface CommunityCardProps {
   community: {
@@ -27,8 +31,44 @@ const ICON_MAP: Record<string, any> = {
   "rebel-base": Target,
 };
 
-export const CommunityCard = ({ community, isJoined }: CommunityCardProps) => {
+export const CommunityCard = ({ community, isJoined: initialJoined }: CommunityCardProps) => {
+  const [isJoined, setIsJoined] = useState(initialJoined);
+  const [loading, setLoading] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
   const Icon = ICON_MAP[community.slug] || Users;
+
+  const handleToggleJoin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!session) {
+      toast.error("You must enter the pit to join a district.");
+      router.push("/auth/signin");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isJoined) {
+        const res = await leaveCommunity(community.id);
+        if (res.success) {
+          setIsJoined(false);
+          toast.success(`Abandoned ${community.name}. Traitor.`);
+        }
+      } else {
+        const res = await joinCommunity(community.id);
+        if (res.success) {
+          setIsJoined(true);
+          toast.success(`Assigned to ${community.name}. Post chaos.`);
+        }
+      }
+    } catch (error) {
+      toast.error("Nikita's signal jammer blocked the request.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -68,19 +108,37 @@ export const CommunityCard = ({ community, isJoined }: CommunityCardProps) => {
 
             <div className="mt-14 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="text-xl font-black italic tracking-tighter text-white group-hover:text-primary transition-colors truncate">
+                <h3 className="text-xl font-black italic tracking-tighter text-white group-hover:text-primary transition-colors truncate max-w-[150px]">
                   {community.name}
                 </h3>
                 <div className="flex items-center gap-2">
-                  {isJoined && (
-                    <div className="px-2 py-0.5 bg-primary/20 border border-primary/30 rounded text-[8px] font-black text-primary tracking-widest animate-pulse">
-                      JOINED
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
+                  <button
+                    onClick={handleToggleJoin}
+                    disabled={loading}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                      isJoined 
+                        ? "bg-white/5 text-white/40 border border-white/5 hover:bg-red-600/10 hover:text-red-600 hover:border-red-600/20" 
+                        : "bg-primary text-white shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:scale-105"
+                    }`}
+                  >
+                    {loading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : isJoined ? (
+                      <>
+                        <Minus className="w-3 h-3" />
+                        Leave
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3 h-3" />
+                        Join
+                      </>
+                    )}
+                  </button>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 rounded-full border border-white/5">
                     <Users className="w-3 h-3 text-white/40" />
                     <span className="text-[10px] font-black text-white/60 tracking-widest">
-                      {community.memberCount.toLocaleString()}
+                      {(community.memberCount + (isJoined && !initialJoined ? 1 : (!isJoined && initialJoined ? -1 : 0))).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -98,7 +156,7 @@ export const CommunityCard = ({ community, isJoined }: CommunityCardProps) => {
                     </div>
                   ))}
                   <div className="w-7 h-7 rounded-full border-2 border-black bg-zinc-900 flex items-center justify-center text-[8px] font-black text-white/40">
-                    +{(community.memberCount - 3).toLocaleString()}
+                    +{(community.memberCount > 3 ? community.memberCount - 3 : 0).toLocaleString()}
                   </div>
                 </div>
                 

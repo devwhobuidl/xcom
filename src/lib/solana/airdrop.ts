@@ -33,6 +33,10 @@ export async function processDailyAirdrop() {
 
   for (const user of activeUsers) {
     try {
+      if (!user.walletAddress) {
+        console.warn(`Skipping airdrop for user ${user.id} - no wallet linked.`);
+        continue;
+      }
       const recipientPubKey = new PublicKey(user.walletAddress);
       const amountPerUser = Math.floor((user.points / totalPoints) * totalDropAmount);
       
