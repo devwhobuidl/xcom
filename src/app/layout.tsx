@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-import { RootProvider } from "@/components/providers/RootProvider";
-import { Shell } from "@/components/layout/Shell";
-import { RightSidebar } from "@/components/layout/RightSidebar";
 import { Suspense } from "react";
 import { GlobalErrorBoundary } from "@/components/error/GlobalErrorBoundary";
+import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,20 +30,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen overflow-x-hidden bg-black text-white`}
       >
-        {/* Global UI Effects */}
-        <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.05),transparent_70%)]" />
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/20 animate-scanline opacity-30" />
-        </div>
-
+        {/* The Boundary is now at the absolute top, but Providers are moved deeper */}
         <GlobalErrorBoundary>
-          <RootProvider>
-            <Suspense fallback={<div className="min-h-screen bg-black" />}>
-              <Shell rightSidebar={<RightSidebar />}>
-                {children}
-              </Shell>
-            </Suspense>
-          </RootProvider>
+          <Suspense fallback={<div className="min-h-screen bg-black" />}>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </Suspense>
         </GlobalErrorBoundary>
       </body>
     </html>

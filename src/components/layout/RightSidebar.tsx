@@ -28,6 +28,8 @@ export function RightSidebar() {
         <TreasuryStats />
       </WidgetErrorBoundary>
       
+      {/* Heavy components are now guarded by error boundaries and session checks */}
+      
       <WidgetErrorBoundary name="Rebel Recon">
         <SuggestedHaters />
       </WidgetErrorBoundary>

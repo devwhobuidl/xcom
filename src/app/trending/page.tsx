@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { TrendingUp, Flame, MessageSquare } from "lucide-react";
 
