@@ -6,12 +6,24 @@ const globalForPrisma = globalThis as unknown as {
 
 // Diagnostic logging for database connection (Production safe)
 const dbUrl = process.env.DATABASE_URL || '';
-const sanitizedUrl = dbUrl ? `${dbUrl.split('@')[0].split(':')[0]}://***@***${dbUrl.split('@')[1] || ''}` : 'MISSING';
+const directUrl = process.env.DIRECT_URL || '';
 
-console.log(`[PRISMA] Initializing connection. URL: ${sanitizedUrl.split('?')[0]}`);
+const sanitize = (url: string) => {
+  if (!url) return 'MISSING';
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.username}:***@${parsed.host}${parsed.pathname}`;
+  } catch {
+    return 'INVALID_FORMAT';
+  }
+};
+
+console.log(`[PRISMA] Initializing connection.`);
+console.log(`[PRISMA] Pooled URL: ${sanitize(dbUrl)}`);
+console.log(`[PRISMA] Direct URL: ${sanitize(directUrl)}`);
 
 if (!dbUrl) {
-  console.error('[PRISMA] CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
+  console.error('[PRISMA] CRITICAL ERROR: DATABASE_URL is not defined.');
 }
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
