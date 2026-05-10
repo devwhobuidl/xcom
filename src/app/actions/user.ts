@@ -1,107 +1,119 @@
 "use server";
 
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
-export async function getUserStats() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-
-  const userId = (session.user as any).id;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+export async function getUserProfile(usernameOrId: string) {
+  return await prisma.user.findFirst({
+    where: {
+      OR: [
+        { username: usernameOrId },
+        { id: usernameOrId },
+        { walletAddress: usernameOrId }
+      ]
+    },
     include: {
+      posts: {
+        take: 20,
+        orderBy: { createdAt: "desc" },
+        include: {
+          author: true,
+          reactions: true,
+          _count: {
+            select: { reactions: true, replies: true },
+          }
+        }
+      },
       _count: {
         select: {
           posts: true,
           followers: true,
           following: true,
         }
-      },
-      posts: {
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        include: {
-          _count: {
-            select: {
-              reactions: true,
-              replies: true,
-            }
-          }
-        }
-      },
+      }
     }
   });
-
-  if (!user) return null;
-
-  const totalPosts = await prisma.post.count({
-    where: { authorId: userId, parentId: null }
-  });
-
-  const totalReplies = await prisma.post.count({
-    where: { authorId: userId, NOT: { parentId: null } }
-  });
-
-  const totalRoastsGiven = await prisma.reaction.count({
-    where: { userId: userId, type: "FUCK_YOU" }
-  });
-
-  const totalRoastsReceived = await prisma.reaction.count({
-    where: { post: { authorId: userId }, type: "FUCK_YOU" }
-  });
-
-  const allUsersCount = await prisma.user.count();
-  const higherPointUsers = await prisma.user.count({
-    where: { points: { gt: user.points } }
-  });
-  const rank = higherPointUsers + 1;
-
-  return {
-    user: {
-      ...user,
-      rank,
-    },
-    counts: {
-      posts: totalPosts,
-      replies: totalReplies,
-      roastsGiven: totalRoastsGiven,
-      roastsReceived: totalRoastsReceived,
-      totalUsers: allUsersCount,
-    },
-    recentActivity: user.posts,
-  };
 }
 
 export async function getLeaderboard() {
-  const users = await prisma.user.findMany({
-    orderBy: {
-      points: 'desc',
-    },
-    take: 50,
+  return await prisma.user.findMany({
+    take: 100,
+    orderBy: { points: "desc" },
     select: {
-      walletAddress: true,
+      id: true,
       username: true,
+      walletAddress: true,
+      image: true,
       points: true,
+      rank: true,
+    }
+  });
+}
+
+export async function followUser(followingId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const followerId = (session.user as any).id;
+
+  if (followerId === followingId) throw new Error("You can't follow yourself, narcissist.");
+
+  try {
+    await prisma.follow.create({
+      data: {
+        followerId,
+        followingId,
+      }
+    });
+
+    revalidatePath(`/profile/${followingId}`);
+    return { success: true };
+  } catch (e) {
+    return { success: false };
+  }
+}
+
+export async function unfollowUser(followingId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const followerId = (session.user as any).id;
+
+  try {
+    await prisma.follow.delete({
+      where: {
+        followerId_followingId: {
+          followerId,
+          followingId,
+        }
+      }
+    });
+
+    revalidatePath(`/profile/${followingId}`);
+    return { success: true };
+  } catch (e) {
+    return { success: false };
+  }
+}
+
+export async function updateProfile(data: { username?: string, bio?: string, image?: string, bannerImage?: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const userId = (session.user as any).id;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      username: data.username,
+      bio: data.bio,
+      image: data.image,
+      bannerImage: data.bannerImage,
     }
   });
 
-  return users.map((user, index) => ({
-    wallet: `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`,
-    username: user.username,
-    points: user.points,
-    rank: index + 1,
-    label: getLabel(user.points, index + 1)
-  }));
-}
-
-function getLabel(points: number, rank: number) {
-  if (rank === 1) return "SUPREME REBEL";
-  if (rank <= 3) return "NIKITA'S NIGHTMARE";
-  if (rank <= 10) return "ELITE HATER";
-  if (points > 5000) return "BANNED ON X";
-  if (points > 1000) return "REBEL";
-  return "DEGEN";
+  revalidatePath(`/profile/${userId}`);
+  return updatedUser;
 }

@@ -32,6 +32,7 @@ export async function createPost(content: string, imageUrl?: string, parentId?: 
       }
     });
 
+    // Create notification for reply
     if (parentId && post.parent?.authorId !== user.id) {
       await prisma.notification.create({
         data: {
@@ -43,6 +44,7 @@ export async function createPost(content: string, imageUrl?: string, parentId?: 
       });
     }
 
+    // Award points: 50 for post, 20 for reply
     await awardPoints(user.id, parentId ? "REPLY" : "POST");
 
     revalidatePath("/");
@@ -73,6 +75,7 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
       include: { post: true }
     });
 
+    // Create notification for reaction
     if (reaction.post.authorId !== user.id) {
       await prisma.notification.create({
         data: {
@@ -84,8 +87,10 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
       });
     }
 
+    // Award points
     await awardPoints(user.id, "REACTION");
   } catch (e) {
+    // Toggle reaction (delete if exists)
     await prisma.reaction.deleteMany({
       where: {
         postId,
@@ -98,80 +103,6 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
   revalidatePath("/");
 }
 
-export async function followUser(followingId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
-
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
-
-  if (!user) throw new Error("User not found");
-  if (user.id === followingId) throw new Error("Cannot follow yourself");
-
-  await prisma.follow.create({
-    data: {
-      followerId: user.id,
-      followingId,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      type: "FOLLOW",
-      userId: followingId,
-      issuerId: user.id,
-    },
-  });
-
-  await awardPoints(user.id, "FOLLOW");
-
-  revalidatePath(`/profile/${followingId}`);
-  revalidatePath("/");
-}
-
-export async function unfollowUser(followingId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
-
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
-
-  if (!user) throw new Error("User not found");
-
-  await prisma.follow.delete({
-    where: {
-      followerId_followingId: {
-        followerId: user.id,
-        followingId,
-      },
-    },
-  });
-
-  revalidatePath(`/profile/${followingId}`);
-  revalidatePath("/");
-}
-
-export async function updateProfile(data: { username?: string; bio?: string; image?: string; bannerImage?: string }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
-
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
-
-  if (!user) throw new Error("User not found");
-
-  const updated = await prisma.user.update({
-    where: { id: user.id },
-    data,
-  });
-
-  revalidatePath(`/profile/${updated.username || updated.id}`);
-  revalidatePath("/");
-  return updated;
-}
 
 export async function getNotifications() {
   const session = await getServerSession(authOptions);
@@ -227,6 +158,9 @@ export async function deletePost(postId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new Error("Unauthorized");
 
+  // In a real app, check for admin role
+  // For the rebellion, maybe only the author or a specific wallet can delete
+  
   await prisma.post.delete({
     where: { id: postId }
   });
@@ -245,6 +179,8 @@ export async function createCommunity(data: { name: string, slug: string, descri
   if (!session?.user) throw new Error("Unauthorized");
 
   const userId = (session.user as any).id;
+
+  // Clean slug
   const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
   const existing = await prisma.community.findUnique({ where: { slug } });
@@ -365,6 +301,9 @@ export async function getPosts(page: number = 0, filter: "for-you" | "following"
       include: { following: true }
     });
     followingIds = user?.following.map(f => f.followingId) || [];
+    
+    // If not following anyone, show nothing or maybe a message? 
+    // For now, if following is empty, return empty array to encourage following.
     if (followingIds.length === 0) return [];
   }
 
