@@ -11,8 +11,8 @@ export default async function ChatPage() {
   }
 
   return (
-    <main className="flex-1">
+    <div className="flex flex-col h-screen overflow-hidden">
       <ChatClient />
-    </main>
+    </div>
   );
 }
