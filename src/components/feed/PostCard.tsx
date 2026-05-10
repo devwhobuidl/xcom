@@ -92,11 +92,11 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
       >
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
-            <Link href={`/profile/${post.author.username || post.author.id}`}>
+            <Link href={`/profile/${post?.author?.username || post?.author?.id || "rebel"}`}>
               <Avatar className="w-10 h-10 border border-white/10 rounded-full hover:border-primary transition-colors">
-                <AvatarImage src={post.author.image || ""} />
+                <AvatarImage src={post?.author?.image || ""} />
                 <AvatarFallback className="bg-secondary text-primary font-bold">
-                  {post.author.username?.slice(0, 2) || post.author.walletAddress.slice(0, 2)}
+                  {post?.author?.username?.slice(0, 2) || post?.author?.walletAddress?.slice(0, 2) || "RE"}
                 </AvatarFallback>
               </Avatar>
             </Link>
@@ -108,14 +108,14 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 min-w-0">
-                <Link href={`/profile/${post.author.username || post.author.id}`} className="font-bold text-[15px] hover:underline cursor-pointer truncate">
-                  {post.author.username || `${post.author.walletAddress.slice(0, 4)}...${post.author.walletAddress.slice(-4)}`}
+                <Link href={`/profile/${post?.author?.username || post?.author?.id || "rebel"}`} className="font-bold text-[15px] hover:underline cursor-pointer truncate">
+                  {post?.author?.username || (post?.author?.walletAddress ? `${post.author.walletAddress.slice(0, 4)}...${post.author.walletAddress.slice(-4)}` : "Anonymous")}
                 </Link>
-                {post.author.points > 5000 && (
+                {post?.author?.points > 5000 && (
                   <Skull className="w-3.5 h-3.5 text-primary drop-shadow-[0_0_5px_rgba(255,0,0,0.5)]" />
                 )}
                 <span className="text-[14px] text-white/40 font-normal truncate">
-                  @{post.author.username?.toLowerCase() || post.author.walletAddress.slice(0, 6)} · {formatDistanceToNow(new Date(post.createdAt))}
+                  @{post?.author?.username?.toLowerCase() || post?.author?.walletAddress?.slice(0, 6) || "rebel"} · {post.createdAt ? formatDistanceToNow(new Date(post.createdAt)) : "just now"}
                 </span>
                 {post.community && (
                   <Link 

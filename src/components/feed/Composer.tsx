@@ -83,9 +83,9 @@ export function Composer({ parentId, placeholder, onSuccess, initialCommunityId 
     <div className={`p-4 pb-2 ${!parentId ? "border-b border-white/5" : "bg-white/[0.02] rounded-2xl mb-2 mt-2"}`}>
       <div className="flex gap-4">
         <Avatar className="w-10 h-10 border border-white/10 rounded-full">
-          <AvatarImage src={(session.user as any).image || ""} />
+          <AvatarImage src={(session?.user as any)?.image || ""} />
           <AvatarFallback className="bg-secondary text-primary font-bold">
-            {session.user.name?.slice(0, 2) || "U"}
+            {session?.user?.name?.slice(0, 2) || "U"}
           </AvatarFallback>
         </Avatar>
         

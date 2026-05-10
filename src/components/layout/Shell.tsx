@@ -113,16 +113,14 @@ export function Shell({ children, rightSidebar }: ShellProps) {
             {session ? (
               <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer">
                 <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
-                  <AvatarImage src={session.user?.image || ""} />
-                  <AvatarFallback className="bg-zinc-800 text-[10px] font-black">
-                    {session.user?.name?.slice(0, 2).toUpperCase() || "RE"}
+                  <AvatarImage src={(session?.user as any)?.image || ""} />
+                  <AvatarFallback className="bg-primary/20 text-primary font-black italic">
+                    {session?.user?.name?.slice(0, 2).toUpperCase() || "RE"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden xl:block flex-1 min-w-0">
-                  <p className="text-sm font-black truncate">{session.user?.name || "REBEL"}</p>
-                  <p className="text-[10px] text-zinc-500 font-mono font-bold truncate">
-                    {session.user?.walletAddress?.slice(0, 4)}...{session.user?.walletAddress?.slice(-4)}
-                  </p>
+                  <span className="font-bold text-white text-[13px] leading-none truncate">{session?.user?.name || (session?.user as any)?.walletAddress?.slice(0, 8) || "Rebel"}</span>
+                  <span className="text-[10px] text-white/40 font-medium truncate">@{session?.user?.name?.toLowerCase().replace(/\s+/g, '_') || "rebel"}</span>
                 </div>
                 <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600" />
               </div>

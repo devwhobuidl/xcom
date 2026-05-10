@@ -125,8 +125,8 @@ export const NotificationsClient = ({
   };
 
   const renderNotificationContent = (notif: Notification) => {
-    const issuerName = notif.issuer.username || `${notif.issuer.walletAddress.slice(0, 4)}...${notif.issuer.walletAddress.slice(-4)}`;
-    const timeAgo = formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true });
+    const issuerName = notif?.issuer?.username || (notif?.issuer?.walletAddress ? `${notif.issuer.walletAddress.slice(0, 4)}...${notif.issuer.walletAddress.slice(-4)}` : "Rebel");
+    const timeAgo = notif?.createdAt ? formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true }) : "just now";
     
     switch (notif.type) {
       case "LIKE":
@@ -140,8 +140,8 @@ export const NotificationsClient = ({
             <div className="flex-1 space-y-3 min-w-0">
               <div className="flex items-center gap-3">
                 <Avatar className="w-8 h-8 border border-white/10 ring-2 ring-transparent group-hover:ring-red-500/20 transition-all shrink-0">
-                  <AvatarImage src={notif.issuer.image || ""} />
-                  <AvatarFallback className="bg-zinc-800 text-[10px] font-black">{issuerName.slice(0, 2)}</AvatarFallback>
+                  <AvatarImage src={notif?.issuer?.image || ""} />
+                  <AvatarFallback className="bg-zinc-800 text-[10px] font-black">{issuerName?.slice(0, 2) || "RE"}</AvatarFallback>
                 </Avatar>
                 <div className="text-[14px] truncate">
                   <span className="font-black text-white">{issuerName}</span>
@@ -171,8 +171,8 @@ export const NotificationsClient = ({
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative shrink-0">
                     <Avatar className="w-12 h-12 border-2 border-white/10 shadow-2xl transition-transform group-hover:scale-105">
-                      <AvatarImage src={notif.issuer.image || ""} />
-                      <AvatarFallback className="bg-zinc-800 font-black">{issuerName.slice(0, 2)}</AvatarFallback>
+                      <AvatarImage src={notif?.issuer?.image || ""} />
+                      <AvatarFallback className="bg-zinc-800 font-black">{issuerName?.slice(0, 2) || "RE"}</AvatarFallback>
                     </Avatar>
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-600 rounded-full border-2 border-black flex items-center justify-center">
                       <Check className="w-3 h-3 text-white stroke-[4px]" />

@@ -55,6 +55,22 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
               We encountered a critical runtime failure. The rebellion is regrouping. You can attempt to reload the comms or return to base.
             </p>
 
+            {/* Error Diagnostics (Hidden by default) */}
+            {this.state.error && (
+              <details className="text-left bg-zinc-900/50 border border-white/5 rounded-xl p-4 max-w-lg mx-auto group">
+                <summary className="text-[10px] font-black uppercase tracking-widest text-white/20 cursor-pointer hover:text-white/40 transition-colors list-none flex items-center gap-2">
+                   <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
+                   Diagnostic Data (For Rebel Intel)
+                </summary>
+                <div className="mt-4 space-y-2 overflow-auto max-h-[200px] scrollbar-hide">
+                   <p className="text-red-500 font-mono text-[11px] font-bold">{this.state.error.name}: {this.state.error.message}</p>
+                   <pre className="text-[9px] text-white/20 font-mono leading-tight whitespace-pre-wrap">
+                     {this.state.error.stack}
+                   </pre>
+                </div>
+              </details>
+            )}
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
               <button
                 onClick={() => window.location.reload()}
@@ -72,7 +88,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
               </button>
             </div>
             
-            <div className="pt-12">
+            <div className="pt-8">
                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/10">ERROR CODE: SECTOR_BRAVO_CRASH</p>
             </div>
           </div>

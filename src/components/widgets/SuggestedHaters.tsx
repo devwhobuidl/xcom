@@ -57,14 +57,14 @@ export function SuggestedHaters() {
                 <Avatar className="w-9 h-9 border border-white/10 rounded-full group-hover/avatar:border-red-600/50 transition-colors shrink-0">
                   <AvatarImage src={user.image || ""} />
                   <AvatarFallback className="bg-zinc-800 text-[8px] font-black italic">
-                    {user.username?.slice(0, 2).toUpperCase() || "RB"}
+                    {user?.username?.slice(0, 2).toUpperCase() || "RB"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col truncate">
                   <span className="font-black text-[13px] group-hover/avatar:text-red-500 text-white truncate transition-colors">
-                    {user.username || `${user.walletAddress.slice(0, 4)}...`}
+                    {user?.username || (user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...` : "Rebel")}
                   </span>
-                  <span className="text-[9px] text-white/30 font-black uppercase tracking-widest truncate">@{user.username?.toLowerCase() || "rebel"}</span>
+                  <span className="text-[9px] text-white/30 font-black uppercase tracking-widest truncate">@{user?.username?.toLowerCase() || "rebel"}</span>
                 </div>
               </Link>
               <Button 
