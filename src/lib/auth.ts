@@ -131,23 +131,29 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.password) {
+            console.warn(`🕵️ Login attempt failed: User ${credentials.username} not found.`);
             return null;
           }
 
           const isValid = await bcrypt.compare(credentials.password, user.password);
 
           if (!isValid) {
+            console.warn(`🕵️ Login attempt failed: Incorrect password for ${credentials.username}.`);
             return null;
           }
 
+          console.log(`✅ User ${credentials.username} authenticated successfully.`);
           return {
             id: user.id,
             name: user.username,
             walletAddress: user.walletAddress,
           };
-        } catch (error) {
-          console.error("AUTH_USERNAME_LOGIN_ERROR:", error);
-          return null;
+        } catch (error: any) {
+          console.error("AUTH_USERNAME_LOGIN_ERROR:", error.message);
+          if (error.message?.includes("Invalid URL")) {
+            throw new Error("Database configuration error. Check DATABASE_URL.");
+          }
+          throw new Error("The rebellion database is acting up. Try again.");
         }
       }
     })

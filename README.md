@@ -60,9 +60,14 @@ npm run dev
 1. Provision a PostgreSQL instance.
 2. Provide the connection string to Vercel.
 
-## Airdrop Logic 💰
+## Troubleshooting 🛠️
 
-The system identifies top active users (points > 500) and processes a batch transfer of $XCOM from the treasury wallet. Logs are stored in the database for transparency.
+### Database Connection (Vercel)
+If you see `"Invalid URL"` errors in production:
+1. Ensure `DATABASE_URL` is set correctly in Vercel Environment Variables.
+2. If your password contains special characters (like `@`, `#`, `!`), you **must** URL-encode them (e.g., `@` becomes `%40`).
+3. Ensure the URL starts with `postgresql://` or `postgres://`.
+4. If using Supabase, use the **Transaction Pooler** connection string (port 6543) for serverless environments.
 
 ---
 **JOIN THE REBELLION. FUCK NIKITA. $XCOM TO THE MOON.** 🚀💀
