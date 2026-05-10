@@ -6,10 +6,19 @@ import prisma from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  const userCount = await prisma.user.count();
-  const postCount = await prisma.post.count();
-  const totalPoints = await prisma.user.aggregate({ _sum: { points: true } });
-  const recentLogs = await prisma.airdropLog.findMany({ take: 5, orderBy: { createdAt: "desc" } });
+  let userCount = 0;
+  let postCount = 0;
+  let totalPoints = { _sum: { points: 0 } };
+  let recentLogs = [];
+
+  try {
+    userCount = await prisma.user.count();
+    postCount = await prisma.post.count();
+    totalPoints = await (prisma.user.aggregate({ _sum: { points: true } }) as any);
+    recentLogs = await prisma.airdropLog.findMany({ take: 5, orderBy: { createdAt: "desc" } });
+  } catch (error) {
+    console.error("ADMIN_PAGE_FETCH_ERROR:", error);
+  }
 
   return (
     <div className="p-6 space-y-8">

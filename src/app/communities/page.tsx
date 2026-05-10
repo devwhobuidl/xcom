@@ -6,14 +6,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CommunityCard } from "@/components/communities/CommunityCard";
 
 export default async function CommunitiesPage() {
-  const communities = await prisma.community.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { members: true, posts: true }
+  let communities = [];
+  try {
+    communities = await prisma.community.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { members: true, posts: true }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("COMMUNITIES_PAGE_FETCH_ERROR:", error);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

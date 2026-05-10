@@ -3,10 +3,15 @@ export const dynamic = 'force-dynamic';
 import { Wallet, Info, ArrowUpRight, CheckCircle2, AlertCircle, History } from "lucide-react";
 
 export default async function TreasuryPage() {
-  const recentDrops = await prisma.airdropLog.findMany({
-    take: 10,
-    orderBy: { createdAt: "desc" }
-  });
+  let recentDrops = [];
+  try {
+    recentDrops = await prisma.airdropLog.findMany({
+      take: 10,
+      orderBy: { createdAt: "desc" }
+    });
+  } catch (error) {
+    console.error("TREASURY_PAGE_FETCH_ERROR:", error);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

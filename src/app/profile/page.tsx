@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+export const dynamic = 'force-dynamic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Zap, Share2, History, Award, Calendar } from "lucide-react";
 import { PostCard } from "@/components/feed/PostCard";
@@ -12,31 +13,36 @@ export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/");
 
-  const user = await prisma.user.findUnique({
-    where: { walletAddress: (session.user as any).walletAddress },
-    include: {
-      posts: {
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: true,
-          reactions: true,
-          _count: { select: { reactions: true, replies: true } }
+  let user = null;
+  try {
+    user = await prisma.user.findUnique({
+      where: { walletAddress: (session.user as any).walletAddress },
+      include: {
+        posts: {
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: true,
+            reactions: true,
+            _count: { select: { reactions: true, replies: true } }
+          }
+        },
+        _count: {
+          select: {
+            posts: true,
+            followers: true,
+            following: true
+          }
+        },
+        pointsLog: {
+          take: 5,
+          orderBy: { createdAt: "desc" }
         }
-      },
-      _count: {
-        select: {
-          posts: true,
-          followers: true,
-          following: true
-        }
-      },
-      pointsLog: {
-        take: 5,
-        orderBy: { createdAt: "desc" }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("PROFILE_PAGE_FETCH_ERROR:", error);
+  }
 
   if (!user) redirect("/");
 

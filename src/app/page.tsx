@@ -1,13 +1,15 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { Composer } from "@/components/feed/Composer";
 import { useSession } from "next-auth/react";
+import { Skull, Zap, Shield, Flame } from "lucide-react";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
 
   return (
@@ -17,8 +19,12 @@ export default function Home() {
           <div className="px-6 py-4 flex justify-between items-center">
             <div className="flex flex-col">
               <h2 className="text-xl font-black italic tracking-tighter leading-none opacity-0 select-none">$XCOM</h2>
+              <div className="flex items-center gap-2">
+                <Skull className="w-5 h-5 text-primary" />
+                <span className="text-xs font-black uppercase tracking-widest text-white/40">The Pit</span>
+              </div>
             </div>
-            {!session && (
+            {status === "unauthenticated" && (
               <div className="inline-block bg-primary/10 border border-primary/20 px-3 py-1 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.15)]">
                 <span className="text-[10px] font-black tracking-widest uppercase text-primary animate-pulse">Public Rebellion</span>
               </div>
@@ -58,9 +64,33 @@ export default function Home() {
               <Composer />
             </div>
           ) : (
-            <div className="p-12 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent text-center space-y-6">
-              <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white/90">Join the Pit</h3>
-              <p className="text-white/30 text-sm max-w-sm mx-auto leading-relaxed">Connect your wallet to roast Nikita, earn $XCOM, and join the rebellion.</p>
+            <div className="relative p-12 border-b border-white/5 overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-50" />
+              <div className="relative z-10 text-center space-y-6">
+                <div className="inline-flex p-3 bg-zinc-900 rounded-2xl border border-white/10 mb-2">
+                  <Flame className="w-8 h-8 text-primary animate-bounce" />
+                </div>
+                <h3 className="text-4xl font-black italic uppercase tracking-tighter text-white/90 leading-tight">
+                  Welcome to <span className="text-primary">The Pit</span>
+                </h3>
+                <p className="text-white/30 text-sm max-w-sm mx-auto leading-relaxed font-medium">
+                  The only place where roasting Nikita earns you $XCOM. Connect your wallet to start the rebellion.
+                </p>
+                <div className="flex justify-center gap-8 pt-4">
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xl font-black text-white italic tracking-tighter">4.2B</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Burned</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xl font-black text-white italic tracking-tighter">1.3K</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Rebels</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xl font-black text-white italic tracking-tighter">$42M</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/20">Treasury</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

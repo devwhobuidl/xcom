@@ -4,20 +4,25 @@ import { Trophy, Skull, Zap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default async function LeaderboardPage() {
-  const topHaters = await prisma.user.findMany({
-    take: 50,
-    orderBy: { points: "desc" },
-    select: {
-      id: true,
-      username: true,
-      walletAddress: true,
-      image: true,
-      points: true,
-      _count: {
-        select: { posts: true }
+  let topHaters = [];
+  try {
+    topHaters = await prisma.user.findMany({
+      take: 50,
+      orderBy: { points: "desc" },
+      select: {
+        id: true,
+        username: true,
+        walletAddress: true,
+        image: true,
+        points: true,
+        _count: {
+          select: { posts: true }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("LEADERBOARD_PAGE_FETCH_ERROR:", error);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

@@ -3,6 +3,7 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { RootProvider } from "@/components/providers/RootProvider";
 import { Shell } from "@/components/layout/Shell";
+import { RightSidebar } from "@/components/layout/RightSidebar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +35,7 @@ export default function RootLayout({
           <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/20 animate-scanline opacity-30" />
         </div>
         <RootProvider>
-          <Shell>{children}</Shell>
+          <Shell rightSidebar={<RightSidebar />}>{children}</Shell>
         </RootProvider>
       </body>
     </html>

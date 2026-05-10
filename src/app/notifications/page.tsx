@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -25,42 +26,46 @@ export default async function NotificationsPage() {
 
   console.log("NotificationsPage: User found in DB:", user.username || user.walletAddress);
 
-  const notifications = await prisma.notification.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      issuer: {
-        select: {
-          id: true,
-          username: true,
-          image: true,
-          walletAddress: true,
-          points: true,
-        }
-      },
-      post: {
-        include: {
-          author: {
-            select: {
-              id: true,
-              username: true,
-              image: true,
-              walletAddress: true,
-              points: true,
-            }
-          },
-          reactions: true,
-          _count: {
-            select: {
-              reactions: true,
-              replies: true,
+  let notifications = [];
+  try {
+    notifications = await prisma.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        issuer: {
+          select: {
+            id: true,
+            username: true,
+            image: true,
+            walletAddress: true,
+            points: true,
+          }
+        },
+        post: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                username: true,
+                image: true,
+                walletAddress: true,
+                points: true,
+              }
+            },
+            reactions: true,
+            _count: {
+              select: {
+                reactions: true,
+                replies: true,
+              }
             }
           }
         }
       }
-    }
-
-  });
+    });
+  } catch (error) {
+    console.error("NOTIFICATIONS_PAGE_FETCH_ERROR:", error);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
+export const dynamic = 'force-dynamic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Zap, Award, ShieldAlert, Calendar } from "lucide-react";
 import { PostCard } from "@/components/feed/PostCard";
@@ -12,35 +13,40 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { username: id },
-        { id: id },
-        { walletAddress: id }
-      ]
-    },
-    include: {
-      posts: {
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: true,
-          reactions: true,
-          _count: { select: { reactions: true, replies: true } }
-        }
+  let user = null;
+  try {
+    user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: id },
+          { id: id },
+          { walletAddress: id }
+        ]
       },
-      followers: true,
-      following: true,
-      _count: {
-        select: {
-          posts: true,
-          followers: true,
-          following: true
+      include: {
+        posts: {
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: true,
+            reactions: true,
+            _count: { select: { reactions: true, replies: true } }
+          }
+        },
+        followers: true,
+        following: true,
+        _count: {
+          select: {
+            posts: true,
+            followers: true,
+            following: true
+          }
         }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("PROFILE_PAGE_FETCH_ERROR:", error);
+  }
 
   if (!user) return notFound();
 

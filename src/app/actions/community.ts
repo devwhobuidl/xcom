@@ -105,53 +105,62 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
 
 
 export async function getNotifications() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return [];
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return [];
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+    const user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
 
-  if (!user) throw new Error("User not found");
+    if (!user) return [];
 
-  return await prisma.notification.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      issuer: {
-        select: {
-          id: true,
-          username: true,
-          image: true,
-          walletAddress: true,
-        }
-      },
-      post: {
-        select: {
-          id: true,
-          content: true,
+    return await prisma.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        issuer: {
+          select: {
+            id: true,
+            username: true,
+            image: true,
+            walletAddress: true,
+          }
+        },
+        post: {
+          select: {
+            id: true,
+            content: true,
+          }
         }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("GET_NOTIFICATIONS_ERROR:", error);
+    return [];
+  }
 }
 
 export async function markNotificationsAsRead() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return;
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+    const user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
 
-  if (!user) throw new Error("User not found");
+    if (!user) return;
 
-  await prisma.notification.updateMany({
-    where: { userId: user.id, read: false },
-    data: { read: true },
-  });
+    await prisma.notification.updateMany({
+      where: { userId: user.id, read: false },
+      data: { read: true },
+    });
 
-  revalidatePath("/notifications");
+    revalidatePath("/notifications");
+  } catch (error) {
+    console.error("MARK_NOTIFICATIONS_READ_ERROR:", error);
+  }
 }
 
 export async function deletePost(postId: string) {
@@ -169,9 +178,14 @@ export async function deletePost(postId: string) {
 }
 
 export async function getCommunities() {
-  return await prisma.community.findMany({
-    orderBy: { memberCount: "desc" },
-  });
+  try {
+    return await prisma.community.findMany({
+      orderBy: { memberCount: "desc" },
+    });
+  } catch (error) {
+    console.error("GET_COMMUNITIES_ERROR:", error);
+    return [];
+  }
 }
 
 export async function createCommunity(data: { name: string, slug: string, description?: string, avatar?: string, banner?: string }) {
@@ -205,14 +219,19 @@ export async function createCommunity(data: { name: string, slug: string, descri
 }
 
 export async function getCommunityBySlug(slug: string) {
-  return await prisma.community.findUnique({
-    where: { slug },
-    include: {
-      _count: {
-        select: { members: true, posts: true }
+  try {
+    return await prisma.community.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: { members: true, posts: true }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("GET_COMMUNITY_BY_SLUG_ERROR:", error);
+    return null;
+  }
 }
 
 export async function joinCommunity(communityId: string) {
@@ -292,50 +311,53 @@ export async function getJoinedCommunities() {
 }
 
 export async function getPosts(page: number = 0, filter: "for-you" | "following" | string = "for-you") {
-  const session = await getServerSession(authOptions);
-  let followingIds: string[] = [];
+  try {
+    const session = await getServerSession(authOptions);
+    let followingIds: string[] = [];
 
-  if (filter === "following" && session?.user) {
-    const user = await prisma.user.findUnique({
-      where: { id: (session.user as any).id },
-      include: { following: true }
-    });
-    followingIds = user?.following.map(f => f.followingId) || [];
-    
-    // If not following anyone, show nothing or maybe a message? 
-    // For now, if following is empty, return empty array to encourage following.
-    if (followingIds.length === 0) return [];
-  }
+    if (filter === "following" && session?.user) {
+      const user = await prisma.user.findUnique({
+        where: { id: (session.user as any).id },
+        include: { following: true }
+      });
+      followingIds = user?.following.map(f => f.followingId) || [];
+      
+      if (followingIds.length === 0) return [];
+    }
 
-  return await prisma.post.findMany({
-    where: {
-      parentId: null,
-      authorId: filter === "following" ? { in: followingIds } : undefined,
-      communityId: (filter !== "for-you" && filter !== "following") ? filter : null,
-    },
-    take: 20,
-    skip: page * 20,
-    orderBy: { createdAt: "desc" },
-    include: {
-      author: {
-        select: {
-          id: true,
-          username: true,
-          walletAddress: true,
-          image: true,
-          points: true,
-        }
+    return await prisma.post.findMany({
+      where: {
+        parentId: null,
+        authorId: filter === "following" ? { in: followingIds } : undefined,
+        communityId: (filter !== "for-you" && filter !== "following") ? filter : null,
       },
-      reactions: true,
-      community: true,
-      _count: {
-        select: { 
-          reactions: true,
-          replies: true,
+      take: 20,
+      skip: page * 20,
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            walletAddress: true,
+            image: true,
+            points: true,
+          }
+        },
+        reactions: true,
+        community: true,
+        _count: {
+          select: { 
+            reactions: true,
+            replies: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("GET_POSTS_ERROR:", error);
+    return [];
+  }
 }
 
 export async function getPostThread(postId: string) {
@@ -359,43 +381,53 @@ export async function getPostThread(postId: string) {
 }
 
 export async function getSuggestedUsers() {
-  const session = await getServerSession(authOptions);
-  let excludeId: string | undefined;
+  try {
+    const session = await getServerSession(authOptions);
+    let excludeId: string | undefined;
 
-  if (session?.user) {
-    const user = await prisma.user.findUnique({
-      where: { id: (session.user as any).id },
-    });
-    excludeId = user?.id;
-  }
-
-  return await prisma.user.findMany({
-    where: {
-      NOT: excludeId ? { id: excludeId } : undefined,
-    },
-    take: 5,
-    orderBy: { points: "desc" },
-    select: {
-      id: true,
-      username: true,
-      walletAddress: true,
-      image: true,
-      points: true,
+    if (session?.user) {
+      const user = await prisma.user.findUnique({
+        where: { id: (session.user as any).id },
+      });
+      excludeId = user?.id;
     }
-  });
+
+    return await prisma.user.findMany({
+      where: {
+        NOT: excludeId ? { id: excludeId } : undefined,
+      },
+      take: 5,
+      orderBy: { points: "desc" },
+      select: {
+        id: true,
+        username: true,
+        walletAddress: true,
+        image: true,
+        points: true,
+      }
+    });
+  } catch (error) {
+    console.error("GET_SUGGESTED_USERS_ERROR:", error);
+    return [];
+  }
 }
 
 export async function getUnreadNotificationCount() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return 0;
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return 0;
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+    const user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
 
-  if (!user) return 0;
+    if (!user) return 0;
 
-  return await prisma.notification.count({
-    where: { userId: user.id, read: false },
-  });
+    return await prisma.notification.count({
+      where: { userId: user.id, read: false },
+    });
+  } catch (error) {
+    console.error("GET_UNREAD_COUNT_ERROR:", error);
+    return 0;
+  }
 }
