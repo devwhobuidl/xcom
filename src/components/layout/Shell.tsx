@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChaosPassModal } from "./ChaosPassModal";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 import { useSession } from "next-auth/react";
 
 interface ShellProps {
@@ -34,6 +35,7 @@ interface ShellProps {
 export function Shell({ children, rightSidebar }: ShellProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [isScrolled, setIsScrolled] = useState(false);
   const [chaosPassOpen, setChaosPassOpen] = useState(false);
 
@@ -113,7 +115,10 @@ export function Shell({ children, rightSidebar }: ShellProps) {
 
           <div className="mt-auto px-2">
             {session ? (
-              <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer">
+              <div 
+                onClick={() => router.push(`/profile/${session.user.id}`)}
+                className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer"
+              >
                 <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
                   <AvatarImage src={(session?.user as any)?.image || ""} />
                   <AvatarFallback className="bg-primary/20 text-primary font-black italic">
@@ -128,8 +133,8 @@ export function Shell({ children, rightSidebar }: ShellProps) {
               </div>
             ) : (
               <Button 
-                onClick={() => setChaosPassOpen(true)}
-                className="w-full rounded-2xl font-black uppercase italic tracking-tight"
+                onClick={() => openAuthModal("signup")}
+                className="w-full rounded-2xl font-black uppercase italic tracking-tight h-14 bg-white text-black hover:bg-zinc-200 shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
               >
                 JOIN REBELLION
               </Button>

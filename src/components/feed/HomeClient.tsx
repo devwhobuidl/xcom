@@ -7,12 +7,14 @@ import { Composer } from "./Composer";
 import { Skull, Zap, Flame, AlertCircle, RefreshCw, ChevronRight, LayoutGrid, Trophy, Bell, Shield, Users, BarChart3, MessageSquare, Heart, Repeat2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 interface HomeClientProps {
   session: any;
 }
 
 export function HomeClient({ session }: HomeClientProps) {
+  const { openAuthModal } = useAuthModal();
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
 
   return (
@@ -78,8 +80,12 @@ export function HomeClient({ session }: HomeClientProps) {
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Post chaos, earn $XCOM</p>
             </div>
           </div>
-          <Button asChild size="sm" className="bg-white text-red-600 hover:bg-zinc-100 font-black italic uppercase tracking-tighter rounded-xl">
-            <Link href="/auth/signin">Enter Pit</Link>
+          <Button 
+            onClick={() => openAuthModal("signup")}
+            size="sm" 
+            className="bg-white text-red-600 hover:bg-zinc-100 font-black italic uppercase tracking-tighter rounded-xl"
+          >
+            Enter Pit
           </Button>
         </div>
       )}

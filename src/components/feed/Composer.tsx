@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { createPost, getJoinedCommunities } from "@/app/actions/community";
 import Image from "next/image";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 interface ComposerProps {
   parentId?: string;
@@ -18,6 +19,7 @@ interface ComposerProps {
 
 export function Composer({ parentId, placeholder, onSuccess, initialCommunityId }: ComposerProps) {
   const { data: session } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [image, setImage] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function Composer({ parentId, placeholder, onSuccess, initialCommunityId 
   const handleSubmit = async () => {
     if (!content.trim()) return;
     if (!session) {
-      toast.error("Sign in to roast Nikita!");
+      openAuthModal("signup");
       return;
     }
 
@@ -77,20 +79,21 @@ export function Composer({ parentId, placeholder, onSuccess, initialCommunityId 
     }
   };
 
-  if (!session) return null;
+  // Show a "teaser" version if not logged in
+  const isLoggedOut = !session;
 
   return (
     <div className={`p-4 pb-2 ${!parentId ? "border-b border-white/5" : "bg-white/[0.02] rounded-2xl mb-2 mt-2"}`}>
       <div className="flex gap-4">
         <Avatar className="w-10 h-10 border border-white/10 rounded-full">
           <AvatarImage src={(session?.user as any)?.image || ""} />
-          <AvatarFallback className="bg-secondary text-primary font-bold">
-            {session?.user?.name?.slice(0, 2) || "U"}
+          <AvatarFallback className="bg-zinc-900 text-white/20 font-bold">
+            {session?.user?.name?.slice(0, 2) || "?"}
           </AvatarFallback>
         </Avatar>
         
         <div className="flex-1 space-y-3">
-          {!parentId && (
+          {!parentId && !isLoggedOut && (
             <div className="relative">
               <button 
                 onClick={() => setIsCommunityMenuOpen(!isCommunityMenuOpen)}
@@ -251,6 +254,17 @@ export function Composer({ parentId, placeholder, onSuccess, initialCommunityId 
             </div>
           </div>
         </div>
+        
+        {isLoggedOut && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-2xl group-hover:bg-black/20 transition-all">
+            <button 
+              onClick={() => openAuthModal("signup")}
+              className="px-6 py-2 bg-red-600 text-white font-black uppercase italic tracking-widest text-sm rounded-full shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:scale-110 transition-all"
+            >
+              JOIN THE REBELLION TO POST
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
