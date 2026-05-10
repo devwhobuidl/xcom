@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -54,7 +53,7 @@ model ChatMessage {
   user      User        @relation(fields: [userId], references: [id])
   channelId String
   channel   ChatChannel @relation(fields: [channelId], references: [id])
-  createdAt DateTime    @default(now())
+  createdAt DateTime    @now()
 }
 
 model Follow {
