@@ -10,15 +10,13 @@ import Link from "next/link";
 
 interface HomeClientProps {
   session: any;
-  isDbConnected: boolean;
 }
 
-export function HomeClient({ session, isDbConnected }: HomeClientProps) {
+export function HomeClient({ session }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState<"for-you" | "following">("for-you");
 
-  // If DB is connected and user is logged in, show the actual feed
-  // Otherwise, show the premium landing page
-  const showLanding = !isDbConnected || !session;
+  // Show landing page if no session is active (safe, static-first)
+  const showLanding = !session;
 
   if (showLanding) {
     return (
@@ -100,25 +98,24 @@ export function HomeClient({ session, isDbConnected }: HomeClientProps) {
           </motion.div>
         </div>
 
-        {/* Premium Stats Grid */}
         <div id="stats-grid" className="relative z-10 max-w-6xl mx-auto px-6 py-20 border-t border-white/5 bg-zinc-950/20">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <StatCard 
               icon={<Users className="w-6 h-6 text-primary" />}
               label="Users Fucked"
-              value="69,420"
+              value="12,420"
               sub="Increasing hourly"
             />
             <StatCard 
               icon={<Zap className="w-6 h-6 text-yellow-500" />}
               label="$XCOM Price"
-              value="$0.000420"
+              value="$0.000069"
               sub="+1,337% Last 24h"
             />
             <StatCard 
               icon={<Shield className="w-6 h-6 text-blue-500" />}
               label="Treasury"
-              value="$4.20M"
+              value="6.9M $XCOM"
               sub="Reserved for chaos"
             />
             <StatCard 
@@ -130,30 +127,7 @@ export function HomeClient({ session, isDbConnected }: HomeClientProps) {
           </div>
         </div>
 
-        {/* Warning Banner if DB is actually down */}
-        {!isDbConnected && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-            <motion.div 
-              initial={{ y: 100 }}
-              animate={{ y: 0 }}
-              className="flex items-center gap-4 px-6 py-4 bg-red-600 text-white rounded-2xl shadow-2xl border border-red-400/30 backdrop-blur-xl"
-            >
-              <AlertCircle className="w-6 h-6 animate-pulse" />
-              <div className="flex flex-col">
-                <span className="text-xs font-black uppercase tracking-widest leading-none">Intelligence Lost</span>
-                <span className="text-[10px] font-bold opacity-80 mt-1 uppercase">Database is under heavy fire. Recon restricted.</span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => window.location.reload()}
-                className="hover:bg-white/10 text-white font-black italic uppercase tracking-tighter text-[10px]"
-              >
-                Reconnect
-              </Button>
-            </motion.div>
-          </div>
-        )}
+
       </div>
     );
   }

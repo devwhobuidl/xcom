@@ -5,16 +5,23 @@ import { redirect } from "next/navigation";
 import { Settings, Shield, User, Lock, Trash2, Bell, Smartphone, Globe } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions).catch(() => null);
   
   if (!session?.user) {
     redirect("/");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+  let user = null;
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: (session.user as any).id },
+    });
+  } catch (error) {
+    console.error("SETTINGS_PAGE_FETCH_ERROR:", error);
+  }
 
   if (!user) redirect("/");
 
