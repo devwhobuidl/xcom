@@ -20,6 +20,13 @@ if (!connectionString) {
     const urlType = connectionString.startsWith("postgresql://") ? "postgresql" : 
                     connectionString.startsWith("postgres://") ? "postgres" : "INVALID";
     const urlLength = connectionString.length;
+    
+    // Check for common encoding issues (unencoded @ in password)
+    const hasUnencodedAt = connectionString.split('@').length > 2;
+    if (hasUnencodedAt) {
+      console.warn("⚠️ WARNING: Your DATABASE_URL password might contain an unencoded '@'. This can cause 'Invalid URL' errors.");
+    }
+
     console.log(`📡 Initializing DB connection: type=${urlType}, length=${urlLength}, prefix=${connectionString.substring(0, 10)}...`);
 
     if (urlType === "INVALID") {
@@ -30,7 +37,7 @@ if (!connectionString) {
       connectionString,
       max: 10,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000, // Increased timeout
+      connectionTimeoutMillis: 15000, // Increased timeout further
       ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
     });
 
@@ -40,8 +47,14 @@ if (!connectionString) {
 
     const adapter = new PrismaPg(pool);
 
+    // In Prisma 7, even with an adapter, passing the datasource URL explicitly can prevent "Invalid URL" errors
     prisma = globalForPrisma.prisma || new PrismaClient({
       adapter,
+      datasources: {
+        db: {
+          url: connectionString
+        }
+      },
       log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
     });
 
@@ -54,8 +67,10 @@ if (!connectionString) {
 
   } catch (error: any) {
     console.error("❌ Failed to initialize Prisma adapter:", error.message);
-    // Fallback to standard client
-    prisma = globalForPrisma.prisma || new PrismaClient();
+    // Fallback to standard client with explicit URL if possible
+    prisma = globalForPrisma.prisma || new PrismaClient({
+      datasources: connectionString ? { db: { url: connectionString } } : undefined
+    });
   }
 }
 
