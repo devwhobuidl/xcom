@@ -7,8 +7,13 @@ import { Users, Plus, Hash, Shield, Info, ArrowLeft, Loader2 } from "lucide-reac
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { useSession } from "next-auth/react";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
+
 export default function CreateCommunityPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -16,8 +21,18 @@ export default function CreateCommunityPage() {
     description: ""
   });
 
+  React.useEffect(() => {
+    if (status === "unauthenticated") {
+      openAuthModal("signup");
+    }
+  }, [status, openAuthModal]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session) {
+      openAuthModal("signup");
+      return;
+    }
     if (!formData.name || !formData.slug) return;
 
     setLoading(true);

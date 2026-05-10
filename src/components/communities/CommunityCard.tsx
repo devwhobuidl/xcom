@@ -9,6 +9,7 @@ import { joinCommunity, leaveCommunity } from "@/app/actions/community";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 interface CommunityCardProps {
   community: {
@@ -36,6 +37,7 @@ export const CommunityCard = ({ community, isJoined: initialJoined }: CommunityC
   const [loading, setLoading] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const { openAuthModal } = useAuthModal();
   const Icon = ICON_MAP[community.slug] || Users;
 
   const handleToggleJoin = async (e: React.MouseEvent) => {
@@ -44,7 +46,7 @@ export const CommunityCard = ({ community, isJoined: initialJoined }: CommunityC
 
     if (!session) {
       toast.error("You must enter the pit to join a district.");
-      router.push("/auth/signin");
+      openAuthModal("signin");
       return;
     }
 

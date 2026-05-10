@@ -10,8 +10,11 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
+
 export function ChatClient() {
   const { data: session } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [messages, setMessages] = useState<any[]>([]);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
@@ -54,7 +57,13 @@ export function ChatClient() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || !channel || !session) return;
+    
+    if (!session) {
+      openAuthModal("signup");
+      return;
+    }
+
+    if (!content.trim() || !channel) return;
 
     setSending(true);
     try {
@@ -152,13 +161,14 @@ export function ChatClient() {
             type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Transmit chaos..."
+            placeholder={session ? "Transmit chaos..." : "Enter the pit to transmit..."}
             disabled={sending}
-            className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-6 pr-14 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:bg-zinc-900 transition-all placeholder:text-white/20 uppercase italic tracking-tight"
+            onClick={() => !session && openAuthModal("signup")}
+            className="w-full bg-zinc-900/50 border border-white/5 rounded-2xl py-4 pl-6 pr-14 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:bg-zinc-900 transition-all placeholder:text-white/20 uppercase italic tracking-tight cursor-pointer"
           />
           <button
             type="submit"
-            disabled={sending || !content.trim()}
+            disabled={sending || (session && !content.trim())}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] active:scale-95 group"
           >
             {sending ? (

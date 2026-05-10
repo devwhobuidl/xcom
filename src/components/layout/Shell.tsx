@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Skull, 
   Home, 
@@ -34,6 +34,7 @@ interface ShellProps {
 
 export function Shell({ children, rightSidebar }: ShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const { openAuthModal } = useAuthModal();
   const [isScrolled, setIsScrolled] = useState(false);
