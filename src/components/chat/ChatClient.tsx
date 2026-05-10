@@ -77,7 +77,7 @@ export function ChatClient() {
 
     socket.on('user_typing', ({ username, isTyping }) => {
       setTypingUsers((prev) => 
-        isTyping ? [...new Set([...prev, username])] : prev.filter(u => u !== username)
+        isTyping ? Array.from(new Set([...prev, username])) : prev.filter(u => u !== username)
       );
     });
 

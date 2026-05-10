@@ -37,7 +37,7 @@ export function JoinButton({ communityId, isJoined: initialJoined }: JoinButtonP
 
   return (
     <Button
-      variant={isJoined ? "outline" : "primary"}
+      variant={isJoined ? "outline" : "default"}
       size="sm"
       disabled={loading}
       onClick={handleToggle}
