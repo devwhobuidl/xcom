@@ -6,8 +6,9 @@ import { authOptions } from "@/lib/auth";
 import { ChevronLeft, Skull } from "lucide-react";
 import Link from "next/link";
 
-export default async function StatusPage({ params }: { params: { id: string } }) {
-  const post = await getPostThread(params.id);
+export default async function StatusPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const post = await getPostThread(id);
   const session = await getServerSession(authOptions);
 
   if (!post) {

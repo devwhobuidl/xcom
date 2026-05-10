@@ -51,11 +51,11 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
       if (isInitial) setLoading(true);
       setError(null);
       
-      let data = await getPosts(pageNum, activeTab);
+      let data: any[] = await getPosts(pageNum, activeTab);
       
       // If no real posts, inject mock posts for first page
       if (isInitial && data.length === 0) {
-        data = MOCK_POSTS as any;
+        data = MOCK_POSTS;
       }
       
       if (isInitial) {
