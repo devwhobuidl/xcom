@@ -29,10 +29,10 @@ export const FollowButton = ({ userId, isFollowing: initialFollowing, isLoggedIn
     try {
       if (previousState) {
         await unfollowUser(userId);
-        toast.success("Unfollowed. One less ally in the pit.");
+        toast.success("Ally lost in the pit... 💀");
       } else {
         await followUser(userId);
-        toast.success("Followed! Rebellion growing stronger. +15 pts");
+        toast.success("Nikita roasted! Rebellion growing. +15 pts 💀");
       }
     } catch (error) {
       toast.error("Failed to update follow status.");
