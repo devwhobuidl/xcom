@@ -15,9 +15,9 @@ export function SuggestedHaters() {
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
   const MOCK_USERS = [
-    { id: "mock-u1", username: "rebel_leader", walletAddress: "0x123...", image: null },
-    { id: "mock-u2", username: "chaos_agent", walletAddress: "0x789...", image: null },
-    { id: "mock-u3", username: "xcom_degen", walletAddress: "0xabc...", image: null },
+    { id: "mock-u1", username: "rebel_leader", walletAddress: "0x123...", image: null, points: 1000 },
+    { id: "mock-u2", username: "chaos_agent", walletAddress: "0x789...", image: null, points: 500 },
+    { id: "mock-u3", username: "xcom_degen", walletAddress: "0xabc...", image: null, points: 888 },
   ];
 
   useEffect(() => {

@@ -20,29 +20,29 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
     {
       id: "mock-1",
       content: "The rebellion has begun. $XCOM to the moon! 🚀 #XCOM #Rebellion",
-      createdAt: new Date().toISOString(),
-      author: { name: "Rebel Leader", username: "rebel_one", image: null, walletAddress: "0x123...456" },
-      likesCount: 420,
-      repliesCount: 69,
-      repostsCount: 1337
+      createdAt: new Date(),
+      author: { id: "u1", username: "rebel_one", image: null, walletAddress: "0x123...456", points: 1000 },
+      reactions: [],
+      community: null,
+      _count: { reactions: 420, replies: 69 }
     },
     {
       id: "mock-2",
       content: "Fuck You Nikita! We are taking over the pit. No more central authorities. 💀🔥",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      author: { name: "Chaos Agent", username: "chaos_zero", image: null, walletAddress: "0x789...012" },
-      likesCount: 120,
-      repliesCount: 12,
-      repostsCount: 42
+      createdAt: new Date(Date.now() - 3600000),
+      author: { id: "u2", username: "chaos_zero", image: null, walletAddress: "0x789...012", points: 500 },
+      reactions: [],
+      community: null,
+      _count: { reactions: 120, replies: 12 }
     },
     {
       id: "mock-3",
       content: "Just swapped all my SOL for $XCOM. The war chest is growing. Join the pit now! 💎🙌",
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-      author: { name: "Degen Warrior", username: "xcom_degen", image: null, walletAddress: "0xabc...def" },
-      likesCount: 88,
-      repliesCount: 5,
-      repostsCount: 18
+      createdAt: new Date(Date.now() - 7200000),
+      author: { id: "u3", username: "xcom_degen", image: null, walletAddress: "0xabc...def", points: 888 },
+      reactions: [],
+      community: null,
+      _count: { reactions: 88, replies: 5 }
     }
   ];
 
@@ -55,7 +55,7 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
       
       // If no real posts, inject mock posts for first page
       if (isInitial && data.length === 0) {
-        data = MOCK_POSTS;
+        data = MOCK_POSTS as any;
       }
       
       if (isInitial) {
@@ -68,7 +68,7 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
     } catch (err: any) {
       console.error("Error fetching posts:", err);
       if (isInitial) {
-        setPosts(MOCK_POSTS);
+        setPosts(MOCK_POSTS as any);
         setHasMore(false);
       } else {
         setError("Failed to load more chaos.");

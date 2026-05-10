@@ -47,22 +47,22 @@ export const NotificationsClient = ({
     {
       id: "mock-n1",
       type: "AIRDROP",
-      issuer: { id: "treasury", username: "XCOM_TREASURY", walletAddress: "TREASURY..." },
+      issuer: { id: "treasury", username: "XCOM_TREASURY", walletAddress: "TREASURY...", points: 0 },
       createdAt: new Date(),
       read: false
     },
     {
       id: "mock-n2",
       type: "FOLLOW",
-      issuer: { id: "u1", username: "nikita_hunter", walletAddress: "0x123..." },
+      issuer: { id: "u1", username: "nikita_hunter", walletAddress: "0x123...", points: 1200 },
       createdAt: new Date(Date.now() - 3600000),
       read: true
     },
     {
       id: "mock-n3",
       type: "LIKE",
-      issuer: { id: "u2", username: "chaos_bringer", walletAddress: "0x456..." },
-      post: { id: "p1", content: "Fuck you Nikita! $XCOM to the moon!" },
+      issuer: { id: "u2", username: "chaos_bringer", walletAddress: "0x456...", points: 800 },
+      post: { id: "p1", content: "Fuck you Nikita! $XCOM to the moon!", createdAt: new Date(Date.now() - 8000000) },
       createdAt: new Date(Date.now() - 7200000),
       read: true
     }
