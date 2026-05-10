@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
+  // Force Webpack instead of Turbopack for production stability
+  webpack: (config) => {
+    return config;
+  },
 };
 
 export default nextConfig;
