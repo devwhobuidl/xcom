@@ -49,7 +49,7 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
   const [showReplyComposer, setShowReplyComposer] = useState(false);
   const [optimisticReactions, setOptimisticReactions] = useState(post.reactions);
 
-  const handleReact = async (type: "LIKE" | "FUCK_YOU") => {
+  const handleReact = async (type: "LIKE" | "FUCK_YOU" | "REPOST") => {
     if (!currentUserId) {
       toast.error("Connect your wallet to roast Nikita!");
       return;
@@ -66,7 +66,10 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
     try {
       await reactToPost(post.id, type);
       if (!alreadyReacted) {
-        toast.success(type === "FUCK_YOU" ? "Nikita felt that! +10 pts" : "Solid hate! +10 pts");
+        let msg = "Solid hate! +10 pts";
+        if (type === "FUCK_YOU") msg = "Nikita felt that! +10 pts";
+        if (type === "REPOST") msg = "Propaganda spread! +30 pts 🔥";
+        toast.success(msg);
       }
     } catch (error) {
       toast.error("Failed to react. Nikita's firewall?");
@@ -76,8 +79,11 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
 
   const fuckYouCount = optimisticReactions.filter((r) => r.type === "FUCK_YOU").length;
   const likeCount = optimisticReactions.filter((r) => r.type === "LIKE").length;
+  const repostCount = optimisticReactions.filter((r) => r.type === "REPOST").length;
+  
   const hasLiked = optimisticReactions.some(r => r.userId === currentUserId && r.type === "LIKE");
   const hasFucked = optimisticReactions.some(r => r.userId === currentUserId && r.type === "FUCK_YOU");
+  const hasReposted = optimisticReactions.some(r => r.userId === currentUserId && r.type === "REPOST");
 
   return (
     <div className={`relative ${isReply ? "pl-12" : ""}`}>
@@ -170,11 +176,14 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
                 <span className="text-[13px] font-medium">{post._count?.replies || 0}</span>
               </button>
               
-              <button className="flex items-center gap-1.5 hover:text-green-500 transition-colors group/btn p-2 rounded-full">
+              <button 
+                onClick={() => handleReact("REPOST")}
+                className={`flex items-center gap-1.5 transition-colors group/btn p-2 rounded-full ${hasReposted ? "text-green-500" : "hover:text-green-500"}`}
+              >
                 <div className="p-2 rounded-full group-hover/btn:bg-green-500/10 transition-colors">
-                  <Repeat2 className="w-[19px] h-[19px]" />
+                  <Repeat2 className={`w-[19px] h-[19px] ${hasReposted ? "stroke-[2.5px]" : ""}`} />
                 </div>
-                <span className="text-[13px] font-medium">0</span>
+                <span className="text-[13px] font-medium">{repostCount}</span>
               </button>
               
               <button 

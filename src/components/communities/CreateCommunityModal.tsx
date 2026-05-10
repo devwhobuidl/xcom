@@ -1,103 +1,180 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Plus, Users, Terminal, Skull } from "lucide-react";
+  X, 
+  Users, 
+  Globe, 
+  Lock, 
+  Skull,
+  Plus,
+  Upload,
+  Zap,
+  Info
+} from "lucide-react";
 import { toast } from "sonner";
 import { createCommunity } from "@/app/actions/community";
 import { useRouter } from "next/navigation";
 
-export function CreateCommunityModal() {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+interface CreateCommunityModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalProps) {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    avatar: "",
+    banner: ""
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!formData.name || !formData.slug) {
+      toast.error("Name and Slug are mandatory for rebellion recruitment!");
+      return;
+    }
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-
+    setIsSubmitting(true);
     try {
-      const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const res = await createCommunity({ name, slug, description });
+      const res = await createCommunity(formData);
       if (res.success) {
-        toast.success("Community founded! The rebellion grows. 💀");
-        setOpen(false);
-        const community = (res as any).community;
-        router.push(`/community/${community.slug}`);
+        toast.success("District Established! Welcome to the resistance.");
+        onClose();
+        router.push(`/community/${res.community?.slug}`);
       } else {
-        toast.error((res as any).error || "Failed to found community.");
+        toast.error(res.error || "Establishment failed. Nikita's spies?");
       }
+    } catch (error) {
+      toast.error("Critical failure during establishment.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-full font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)]">
-          <Plus className="w-3 h-3" /> Found Clan
-        </button>
-      </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-[425px] bg-black border-white/10 p-0 overflow-hidden rounded-[2rem]">
-        <div className="h-32 bg-gradient-to-br from-primary/30 to-black p-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-          <div className="relative z-10 flex flex-col justify-end h-full">
-            <div className="flex items-center gap-2 mb-1">
-              <Terminal className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">New Sector</span>
-            </div>
-            <h2 className="text-2xl font-black italic tracking-tighter text-white">FOUND A CLAN</h2>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name" className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Clan Name</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="The Nikita Roasters"
-                required
-                className="bg-white/[0.03] border-white/10 rounded-xl py-6 font-mono text-white placeholder:text-white/20"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description" className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Manifesto</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="What is the purpose of this sector? Who are we roasting today?"
-                className="bg-white/[0.03] border-white/10 rounded-xl min-h-[100px] font-medium text-white placeholder:text-white/20"
-              />
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-primary text-white font-black uppercase tracking-[0.2em] py-6 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)]"
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            onClick={onClose}
+          />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-xl bg-zinc-950 border border-white/10 rounded-[40px] shadow-[0_0_50px_rgba(220,38,38,0.2)] overflow-hidden"
           >
-            {loading ? "Mobilizing..." : "Found the Clan"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+            {/* Header */}
+            <div className="p-8 border-b border-white/5 bg-gradient-to-r from-red-600/10 to-transparent">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-600 flex items-center justify-center rounded-2xl rotate-[-5deg] shadow-[0_0_20px_rgba(220,38,38,0.3)]">
+                    <Skull className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">Establish District</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Recruit your squad</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-white/5 rounded-full text-zinc-500 hover:text-white transition-all"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">District Name</label>
+                  <input 
+                    type="text"
+                    required
+                    placeholder="e.g. THE SOVIETS"
+                    className="w-full bg-zinc-900 border border-white/5 rounded-2xl py-4 px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all placeholder:text-zinc-700 uppercase italic tracking-tight"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Frequency (Slug)</label>
+                  <div className="relative">
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-red-600/40 font-bold italic">/</span>
+                    <input 
+                      type="text"
+                      required
+                      placeholder="soviet-base"
+                      className="w-full bg-zinc-900 border border-white/5 rounded-2xl py-4 pl-10 pr-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all placeholder:text-zinc-700 italic tracking-tight"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">District Objective</label>
+                <textarea 
+                  placeholder="What is your clan's purpose? Roast Nikita? Spread Chaos?"
+                  className="w-full bg-zinc-900 border border-white/5 rounded-2xl py-4 px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all placeholder:text-zinc-700 uppercase italic tracking-tight min-h-[100px] resize-none"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="p-4 border border-white/5 bg-zinc-900/50 rounded-2xl flex items-center gap-3 group cursor-pointer hover:border-red-600/30 transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-white/5 group-hover:bg-red-600/10">
+                       <Upload className="w-5 h-5 text-zinc-500 group-hover:text-red-600" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-white">Avatar</span>
+                 </div>
+                 <div className="p-4 border border-white/5 bg-zinc-900/50 rounded-2xl flex items-center gap-3 group cursor-pointer hover:border-red-600/30 transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center border border-white/5 group-hover:bg-red-600/10">
+                       <Upload className="w-5 h-5 text-zinc-500 group-hover:text-red-600" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 group-hover:text-white">Banner</span>
+                 </div>
+              </div>
+
+              <div className="bg-red-600/5 border border-red-600/10 rounded-2xl p-4 flex gap-3">
+                <Info className="w-5 h-5 text-red-600 shrink-0" />
+                <p className="text-[10px] font-bold text-white/40 uppercase leading-relaxed tracking-wider">
+                  Establishing a district costs <span className="text-white">0.1 SOL</span> (Mainnet) or <span className="text-white">500 XCOM Points</span>. This prevents Nikita's bots from flooding our network.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-16 bg-white hover:bg-red-600 text-black hover:text-white font-black uppercase italic tracking-tighter text-lg rounded-2xl transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)] hover:shadow-red-600/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              >
+                {isSubmitting ? (
+                  <Zap className="w-6 h-6 animate-spin" />
+                ) : (
+                  <>
+                    Establish Now
+                    <Plus className="w-6 h-6" />
+                  </>
+                )}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

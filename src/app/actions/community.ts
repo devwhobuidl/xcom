@@ -55,7 +55,7 @@ export async function createPost(content: string, imageUrl?: string, parentId?: 
   }
 }
 
-export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
+export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU" | "REPOST") {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new Error("Unauthorized");
 
@@ -79,7 +79,7 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
     if (reaction.post.authorId !== user.id) {
       await prisma.notification.create({
         data: {
-          type: type === "LIKE" ? "LIKE" : "REPOST",
+          type: type as any, // Both LIKE and REPOST are in NotificationType
           userId: reaction.post.authorId,
           issuerId: user.id,
           postId,
@@ -87,8 +87,8 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU") {
       });
     }
 
-    // Award points
-    await awardPoints(user.id, "REACTION");
+    // Award points: 10 for reaction, 30 for repost
+    await awardPoints(user.id, type === "REPOST" ? "REPOST" : "REACTION");
   } catch (e) {
     // Toggle reaction (delete if exists)
     await prisma.reaction.deleteMany({

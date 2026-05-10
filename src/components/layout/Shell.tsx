@@ -32,6 +32,9 @@ interface ShellProps {
   rightSidebar?: React.ReactNode;
 }
 
+import { ProfileDropdown } from "./ProfileDropdown";
+import { CreateCommunityModal } from "@/components/communities/CreateCommunityModal";
+
 export function Shell({ children, rightSidebar }: ShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -39,6 +42,8 @@ export function Shell({ children, rightSidebar }: ShellProps) {
   const { openAuthModal } = useAuthModal();
   const [isScrolled, setIsScrolled] = useState(false);
   const [chaosPassOpen, setChaosPassOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [createCommunityOpen, setCreateCommunityOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,32 +111,48 @@ export function Shell({ children, rightSidebar }: ShellProps) {
             })}
 
             <button
+              onClick={() => setCreateCommunityOpen(true)}
+              className="w-full mt-4 bg-white hover:bg-zinc-200 text-black flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
+            >
+              <Plus className="w-5 h-5 text-black group-hover:rotate-90 transition-transform" />
+              <span className="hidden xl:block font-black uppercase italic tracking-tight">Create Clan</span>
+            </button>
+
+            <button
               onClick={() => setChaosPassOpen(true)}
-              className="w-full mt-8 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(220,38,38,0.2)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
+              className="w-full mt-2 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(220,38,38,0.2)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
             >
               <Zap className="w-5 h-5 fill-white group-hover:animate-bounce" />
               <span className="hidden xl:block font-black uppercase italic tracking-tight">Chaos Pass</span>
             </button>
           </nav>
 
-          <div className="mt-auto px-2">
+          <div className="mt-auto px-2 relative">
             {session ? (
-              <div 
-                onClick={() => router.push(`/profile/${session.user.id}`)}
-                className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer"
-              >
-                <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
-                  <AvatarImage src={(session?.user as any)?.image || ""} />
-                  <AvatarFallback className="bg-primary/20 text-primary font-black italic">
-                    {session?.user?.name?.slice(0, 2).toUpperCase() || "RE"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden xl:block flex-1 min-w-0">
-                  <span className="font-bold text-white text-[13px] leading-none truncate">{session?.user?.name || (session?.user as any)?.walletAddress?.slice(0, 8) || "Rebel"}</span>
-                  <span className="text-[10px] text-white/40 font-medium truncate">@{session?.user?.name?.toLowerCase().replace(/\s+/g, '_') || "rebel"}</span>
+              <>
+                <div 
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer"
+                >
+                  <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
+                    <AvatarImage src={(session?.user as any)?.image || ""} />
+                    <AvatarFallback className="bg-primary/20 text-primary font-black italic">
+                      {session?.user?.name?.slice(0, 2).toUpperCase() || "RE"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden xl:block flex-1 min-w-0">
+                    <span className="font-bold text-white text-[13px] leading-none truncate">{session?.user?.name || (session?.user as any)?.walletAddress?.slice(0, 8) || "Rebel"}</span>
+                    <span className="text-[10px] text-white/40 font-medium truncate">@{session?.user?.name?.toLowerCase().replace(/\s+/g, '_') || "rebel"}</span>
+                  </div>
+                  <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600" />
                 </div>
-                <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600" />
-              </div>
+                
+                <ProfileDropdown 
+                  isOpen={profileDropdownOpen} 
+                  onClose={() => setProfileDropdownOpen(false)}
+                  user={session.user as any}
+                />
+              </>
             ) : (
               <Button 
                 onClick={() => openAuthModal("signup")}
