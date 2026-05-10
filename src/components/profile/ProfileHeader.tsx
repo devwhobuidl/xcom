@@ -63,7 +63,7 @@ export const ProfileHeader = ({ user }: ProfileHeaderProps) => {
           <Avatar className="w-32 h-32 border-4 border-black rounded-full">
             <AvatarImage src={user.image || ""} />
             <AvatarFallback className="bg-secondary text-primary text-4xl font-black">
-              {user.username?.slice(0, 2) || user.walletAddress.slice(0, 2)}
+              {user.username?.slice(0, 2) || user.walletAddress?.slice(0, 2) || "RE"}
             </AvatarFallback>
           </Avatar>
         </div>

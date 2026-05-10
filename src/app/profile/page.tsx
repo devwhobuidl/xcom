@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 export const dynamic = 'force-dynamic';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Zap, Share2, History, Award, Calendar } from "lucide-react";
+import { Zap, Share2, History, Award, Calendar, ShieldAlert } from "lucide-react";
 import { PostCard } from "@/components/feed/PostCard";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -41,10 +42,19 @@ export default async function ProfilePage() {
       }
     });
   } catch (error) {
-    console.error("PROFILE_PAGE_FETCH_ERROR:", error);
+    console.error("PROFILE_FETCH_ERROR:", error);
   }
 
-  if (!user) redirect("/");
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+        <ShieldAlert className="w-12 h-12 text-primary mb-4" />
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">SIGNAL LOST</h2>
+        <p className="text-white/40 mt-2 max-w-xs">Your profile frequency is jammed. Try logging in again.</p>
+        <Link href="/" className="mt-6 bg-white text-black px-8 py-3 rounded-2xl font-black uppercase italic hover:bg-zinc-200 transition-all">Back to The Pit</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

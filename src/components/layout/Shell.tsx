@@ -59,7 +59,7 @@ export function Shell({ children, rightSidebar }: ShellProps) {
     { name: "CHAT", href: "/chat", icon: MessageCircle },
     { name: "RANK", href: "/leaderboard", icon: Trophy },
     { name: "CHAOS", href: "/notifications", icon: Bell },
-    { name: "PROFILE", href: `/profile/${session?.user?.id || 'me'}`, icon: User },
+    { name: "PROFILE", href: "/profile", icon: User },
     { name: "INTEL", href: "/settings", icon: Shield },
   ];
 
@@ -110,41 +110,34 @@ export function Shell({ children, rightSidebar }: ShellProps) {
               );
             })}
 
-            <button
-              onClick={() => setCreateCommunityOpen(true)}
-              className="w-full mt-4 bg-white hover:bg-zinc-200 text-black flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
-            >
-              <Plus className="w-5 h-5 text-black group-hover:rotate-90 transition-transform" />
-              <span className="hidden xl:block font-black uppercase italic tracking-tight">Create Clan</span>
-            </button>
 
-            <button
-              onClick={() => setChaosPassOpen(true)}
-              className="w-full mt-2 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-3 px-4 py-4 rounded-2xl shadow-[0_10px_25px_rgba(220,38,38,0.2)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
-            >
-              <Zap className="w-5 h-5 fill-white group-hover:animate-bounce" />
-              <span className="hidden xl:block font-black uppercase italic tracking-tight">Chaos Pass</span>
-            </button>
           </nav>
 
           <div className="mt-auto px-2 relative">
             {session ? (
               <>
-                <div 
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all cursor-pointer"
-                >
-                  <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
-                    <AvatarImage src={(session?.user as any)?.image || ""} />
-                    <AvatarFallback className="bg-primary/20 text-primary font-black italic">
-                      {session?.user?.name?.slice(0, 2).toUpperCase() || "RE"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden xl:block flex-1 min-w-0">
-                    <span className="font-bold text-white text-[13px] leading-none truncate">{session?.user?.name || (session?.user as any)?.walletAddress?.slice(0, 8) || "Rebel"}</span>
-                    <span className="text-[10px] text-white/40 font-medium truncate">@{session?.user?.name?.toLowerCase().replace(/\s+/g, '_') || "rebel"}</span>
-                  </div>
-                  <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600" />
+                <div className="flex items-center gap-2 p-1.5 bg-zinc-900/50 rounded-2xl border border-white/5 group hover:bg-zinc-900 transition-all">
+                  <Link 
+                    href="/profile"
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
+                    <Avatar className="w-10 h-10 border border-white/10 ring-2 ring-red-600/20 group-hover:ring-red-600/40 transition-all">
+                      <AvatarImage src={(session?.user as any)?.image || ""} />
+                      <AvatarFallback className="bg-primary/20 text-primary font-black italic">
+                        {session?.user?.name?.slice(0, 2).toUpperCase() || "RE"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden xl:block flex-1 min-w-0">
+                      <span className="font-bold text-white text-[13px] leading-none truncate block">{session?.user?.name || (session?.user as any)?.walletAddress?.slice(0, 8) || "Rebel"}</span>
+                      <span className="text-[10px] text-white/40 font-medium truncate block">@{session?.user?.name?.toLowerCase().replace(/\s+/g, '_') || "rebel"}</span>
+                    </div>
+                  </Link>
+                  <button 
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    className="p-2 hover:bg-white/5 rounded-xl transition-colors"
+                  >
+                    <MoreHorizontal className="hidden xl:block w-4 h-4 text-zinc-600 hover:text-white transition-colors" />
+                  </button>
                 </div>
                 
                 <ProfileDropdown 
@@ -197,15 +190,8 @@ export function Shell({ children, rightSidebar }: ShellProps) {
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-2 z-50">
         <Link href="/" className="p-2 text-zinc-500 hover:text-white"><Home className="w-6 h-6" /></Link>
         <Link href="/communities" className="p-2 text-zinc-500 hover:text-white"><LayoutGrid className="w-6 h-6" /></Link>
-        <div className="p-1 bg-red-600 rounded-full -mt-10 shadow-lg shadow-red-600/30 ring-4 ring-black">
-          <Button size="icon" className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700" asChild>
-            <Link href="/communities/create">
-              <Plus className="w-6 h-6 text-white" />
-            </Link>
-          </Button>
-        </div>
-        <Link href="/chat" className="p-2 text-zinc-500 hover:text-white"><MessageCircle className="w-6 h-6" /></Link>
-        <Link href={`/profile/${session?.user?.id || 'me'}`} className="p-2 text-zinc-500 hover:text-white"><User className="w-6 h-6" /></Link>
+        <Link href="/notifications" className="p-2 text-zinc-500 hover:text-white"><Bell className="w-6 h-6" /></Link>
+        <Link href="/profile" className="p-2 text-zinc-500 hover:text-white"><User className="w-6 h-6" /></Link>
       </nav>
 
       <ChaosPassModal open={chaosPassOpen} onOpenChange={setChaosPassOpen} />

@@ -11,57 +11,67 @@ import { format } from "date-fns";
 import Link from "next/link";
 
 export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getServerSession(authOptions);
-    const { id } = await params;
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
 
-    let user = null;
-    try {
-      user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { username: id },
-            { id: id },
-            { walletAddress: id }
-          ]
+  let user = null;
+  try {
+    user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username: id },
+          { id: id },
+          { walletAddress: id }
+        ]
+      },
+      include: {
+        posts: {
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: {
+            author: true,
+            reactions: true,
+            _count: { select: { reactions: true, replies: true } }
+          }
         },
-        include: {
-          posts: {
-            take: 20,
-            orderBy: { createdAt: "desc" },
-            include: {
-              author: true,
-              reactions: true,
-              _count: { select: { reactions: true, replies: true } }
-            }
-          },
-          followers: true,
-          following: true,
-          _count: {
-            select: {
-              posts: true,
-              followers: true,
-              following: true
-            }
+        followers: true,
+        following: true,
+        _count: {
+          select: {
+            posts: true,
+            followers: true,
+            following: true
           }
         }
-      });
-    } catch (error) {
-      console.error("PROFILE_PAGE_FETCH_ERROR:", error);
-    }
+      }
+    });
+  } catch (error) {
+    console.error("PROFILE_FETCH_ERROR:", error);
+  }
 
-    if (!user) return notFound();
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+        <ShieldAlert className="w-12 h-12 text-primary mb-4" />
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">REBEL NOT FOUND</h2>
+        <p className="text-white/40 mt-2 max-w-xs">This user hasn't joined the rebellion yet or has been terminated.</p>
+        <Link href="/" className="mt-6 bg-white text-black px-8 py-3 rounded-2xl font-black uppercase italic hover:bg-zinc-200 transition-all">Back to The Pit</Link>
+      </div>
+    );
+  }
 
-    if (session?.user && (session.user as any).id === user.id) {
-      redirect("/profile");
-    }
+  // Redirect to own profile if it's the current user
+  if (session?.user && (session.user as any).id === user.id) {
+    redirect("/profile");
+  }
 
-    const isFollowing = session?.user 
-      ? user.followers.some(f => f.followerId === (session.user as any).id)
-      : false;
+  const isFollowing = session?.user 
+    ? user.followers.some(f => f.followerId === (session.user as any).id)
+    : false;
 
-    const displayName = user.username || (user.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Unknown Rebel");
+  const displayName = user.username || (user.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Unknown Rebel");
 
+  try {
     return (
       <div className="flex flex-col min-h-screen">
         <div className="relative h-48 bg-zinc-900 border-b border-white/5">
