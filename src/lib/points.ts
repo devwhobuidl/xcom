@@ -4,6 +4,7 @@ export const POINTS_CONFIG = {
   POST: 50,
   REPLY: 20,
   REACTION: 10,
+  REPOST: 30,
   FOLLOW: 15,
   STREAK_BONUS: 1.5,
 };
