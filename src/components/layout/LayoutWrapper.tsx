@@ -7,14 +7,11 @@ import { RootProvider } from "../providers/RootProvider";
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLanding = pathname === "/";
-
-  // Completely bypass Shell, Sidebars, AND Providers for the landing page
-  // This makes the landing page 100% static and immune to JS/Provider crashes
-  if (isLanding) {
-    return <main>{children}</main>;
-  }
-
+  
+  // Always wrap in RootProvider and Shell for the "Twitter-clone" look
+  // Use a slightly different logic if we ever want a pure landing page again, 
+  // but for now, the user wants the "Pit" UI everywhere.
+  
   return (
     <RootProvider>
       <Shell rightSidebar={<RightSidebar />}>

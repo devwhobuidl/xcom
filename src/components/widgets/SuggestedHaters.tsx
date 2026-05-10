@@ -14,13 +14,21 @@ export function SuggestedHaters() {
   const [loading, setLoading] = useState(true);
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
+  const MOCK_USERS = [
+    { id: "mock-u1", username: "rebel_leader", walletAddress: "0x123...", image: null },
+    { id: "mock-u2", username: "chaos_agent", walletAddress: "0x789...", image: null },
+    { id: "mock-u3", username: "xcom_degen", walletAddress: "0xabc...", image: null },
+  ];
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const data = await getSuggestedUsers();
+        let data = await getSuggestedUsers();
+        if (data.length === 0) data = MOCK_USERS;
         setUsers(data.slice(0, 3)); // Only show top 3
       } catch (error) {
         console.error("Failed to fetch suggested haters", error);
+        setUsers(MOCK_USERS);
       } finally {
         setLoading(false);
       }

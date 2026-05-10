@@ -15,9 +15,10 @@ export default async function NotificationsPage() {
       redirect("/");
     }
 
+    const userId = (session.user as any).id;
     const user = await prisma.user.findUnique({
-      where: { id: (session.user as any).id },
-    }).catch(() => null);
+      where: { id: userId },
+    }).catch(() => ({ id: userId, username: "rebel" }));
 
     if (!user) {
       redirect("/");

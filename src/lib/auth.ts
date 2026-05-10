@@ -192,18 +192,28 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user, account }) {
-      if (user) {
-        token.id = (user as any).dbId || user.id;
-        token.walletAddress = (user as any).walletAddress;
+      try {
+        if (user) {
+          token.id = (user as any).dbId || user.id;
+          token.walletAddress = (user as any).walletAddress;
+        }
+        return token;
+      } catch (error) {
+        console.error("JWT_CALLBACK_ERROR:", error);
+        return token;
       }
-      return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).walletAddress = token.walletAddress;
+      try {
+        if (session.user) {
+          (session.user as any).id = token.id;
+          (session.user as any).walletAddress = token.walletAddress;
+        }
+        return session;
+      } catch (error) {
+        console.error("SESSION_CALLBACK_ERROR:", error);
+        return session;
       }
-      return session;
     },
   },
   pages: {

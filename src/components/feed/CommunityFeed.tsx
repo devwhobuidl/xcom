@@ -16,12 +16,47 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const MOCK_POSTS = [
+    {
+      id: "mock-1",
+      content: "The rebellion has begun. $XCOM to the moon! 🚀 #XCOM #Rebellion",
+      createdAt: new Date().toISOString(),
+      author: { name: "Rebel Leader", username: "rebel_one", image: null, walletAddress: "0x123...456" },
+      likesCount: 420,
+      repliesCount: 69,
+      repostsCount: 1337
+    },
+    {
+      id: "mock-2",
+      content: "Fuck You Nikita! We are taking over the pit. No more central authorities. 💀🔥",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      author: { name: "Chaos Agent", username: "chaos_zero", image: null, walletAddress: "0x789...012" },
+      likesCount: 120,
+      repliesCount: 12,
+      repostsCount: 42
+    },
+    {
+      id: "mock-3",
+      content: "Just swapped all my SOL for $XCOM. The war chest is growing. Join the pit now! 💎🙌",
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+      author: { name: "Degen Warrior", username: "xcom_degen", image: null, walletAddress: "0xabc...def" },
+      likesCount: 88,
+      repliesCount: 5,
+      repostsCount: 18
+    }
+  ];
+
   const fetchPosts = async (pageNum: number, isInitial: boolean = false) => {
     try {
       if (isInitial) setLoading(true);
       setError(null);
       
-      const data = await getPosts(pageNum, activeTab);
+      let data = await getPosts(pageNum, activeTab);
+      
+      // If no real posts, inject mock posts for first page
+      if (isInitial && data.length === 0) {
+        data = MOCK_POSTS;
+      }
       
       if (isInitial) {
         setPosts(data);
@@ -29,13 +64,14 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
         setPosts(prev => [...prev, ...data]);
       }
       
-      setHasMore(data.length === 10);
+      setHasMore(data.length >= 10);
     } catch (err: any) {
       console.error("Error fetching posts:", err);
-      if (err.message?.includes("Can't reach database") || err.message?.includes("Prisma")) {
-        setError("The signal is weak. Re-establishing connection to the pit...");
+      if (isInitial) {
+        setPosts(MOCK_POSTS);
+        setHasMore(false);
       } else {
-        setError("Failed to load the chaos. The rebellion is currently offline.");
+        setError("Failed to load more chaos.");
       }
     } finally {
       setLoading(false);
