@@ -8,8 +8,12 @@ import { followUser } from "@/app/actions/user";
 import { getSuggestedUsers } from "@/app/actions/community";
 import { toast } from "sonner";
 import { WidgetContainer } from "./WidgetContainer";
+import { useSession } from "next-auth/react";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 
 export function SuggestedHaters() {
+  const { data: session } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
@@ -37,10 +41,16 @@ export function SuggestedHaters() {
   }, []);
 
   const handleFollow = async (userId: string) => {
+    if (!session) {
+      toast.error("Join the rebellion to start roasting!");
+      openAuthModal("signup");
+      return;
+    }
+
     try {
       await followUser(userId);
       setFollowedIds(prev => new Set(prev).add(userId));
-      toast.success("Joined the rebellion!");
+      toast.success("Joined the rebellion! Nikita roasted 💀");
     } catch (error) {
       toast.error("Failed to follow. Are you even a rebel?");
     }

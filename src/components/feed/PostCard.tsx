@@ -9,6 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 import { reactToPost, createPost, deletePost } from "@/app/actions/community";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useAuthModal } from "@/components/providers/AuthModalProvider";
 import { Composer } from "./Composer";
 
 interface Post {
@@ -45,15 +47,22 @@ interface PostCardProps {
   isReply?: boolean;
 }
 
-export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
+export const PostCard = ({ post, currentUserId: propUserId, isReply }: PostCardProps) => {
+  const { data: session } = useSession();
+  const { openAuthModal } = useAuthModal();
   const [showReplyComposer, setShowReplyComposer] = useState(false);
   const [optimisticReactions, setOptimisticReactions] = useState(post.reactions);
 
+  const currentUserId = propUserId || (session?.user as any)?.id;
+
   const handleReact = async (type: "LIKE" | "FUCK_YOU" | "REPOST") => {
-    if (!currentUserId) {
-      toast.error("Connect your wallet to roast Nikita!");
+    if (!session) {
+      toast.error("Join the rebellion to amplify chaos!");
+      openAuthModal("signup");
       return;
     }
+
+    if (!currentUserId) return;
 
     // Toggle logic for optimistic UI
     const alreadyReacted = optimisticReactions.find(r => r.userId === currentUserId && r.type === type);
@@ -66,9 +75,10 @@ export const PostCard = ({ post, currentUserId, isReply }: PostCardProps) => {
     try {
       await reactToPost(post.id, type);
       if (!alreadyReacted) {
-        let msg = "Solid hate! +10 pts";
-        if (type === "FUCK_YOU") msg = "Nikita felt that! +10 pts";
+        let msg = "Chaos amplified 🔥";
+        if (type === "FUCK_YOU") msg = "Nikita roasted 💀";
         if (type === "REPOST") msg = "Propaganda spread! +30 pts 🔥";
+        if (type === "LIKE") msg = "Solid hate! +10 pts";
         toast.success(msg);
       }
     } catch (error) {

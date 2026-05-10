@@ -174,4 +174,5 @@ enum NotificationType {
   REPLY
   REPOST
   AIRDROP
+  FUCK_YOU
 }

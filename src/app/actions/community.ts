@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { NotificationType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -79,7 +80,7 @@ export async function reactToPost(postId: string, type: "LIKE" | "FUCK_YOU" | "R
     if (reaction.post.authorId !== user.id) {
       await prisma.notification.create({
         data: {
-          type: type as any, // Both LIKE and REPOST are in NotificationType
+          type: type as NotificationType,
           userId: reaction.post.authorId,
           issuerId: user.id,
           postId,
