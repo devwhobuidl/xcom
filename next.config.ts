@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   webpack: (config) => {
     return config;
   },
+  // Silence Turbopack default error in Next.js 16
+  turbopack: {},
 };
 
 export default nextConfig;
