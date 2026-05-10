@@ -1,5 +1,5 @@
 import React from "react";
-import ChatClient from "@/components/chat/ChatClient";
+import { ChatClient } from "@/components/chat/ChatClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
@@ -11,8 +11,8 @@ export default async function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <main className="flex-1">
       <ChatClient />
-    </div>
+    </main>
   );
 }
