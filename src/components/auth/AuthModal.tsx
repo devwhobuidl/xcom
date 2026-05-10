@@ -127,7 +127,7 @@ export function AuthModal({ isOpen, onClose, initialTab = "login" }: AuthModalPr
       } else {
         toast.success("Wallet verified. Entering the pit.");
         onClose();
-        router.refresh();
+        window.location.href = "/";
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign message.");

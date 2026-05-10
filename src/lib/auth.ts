@@ -8,10 +8,6 @@ import bs58 from "bs58";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p", // Fallback for local, but production MUST have it
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   debug: process.env.NODE_ENV === 'development',
   providers: [
     TwitterProvider({
@@ -168,6 +164,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -195,8 +192,7 @@ export const authOptions: NextAuthOptions = {
             });
           }
 
-          (user as any).dbId = dbUser.id;
-          (user as any).walletAddress = dbUser.walletAddress;
+          (user as any).id = dbUser.id; // Ensure user.id is the database ID for the next steps
           return true;
         } catch (error) {
           console.error("Error in Twitter signIn callback:", error);
@@ -205,37 +201,21 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account, profile }) {
-      try {
-        if (user) {
-          // On sign in
-          token.id = (user as any).dbId || user.id;
-          token.walletAddress = (user as any).walletAddress;
-        }
-        
-        // Always return token
-        return token;
-      } catch (error) {
-        console.error("🚨 [NEXTAUTH] JWT_CALLBACK_ERROR:", error);
-        return token;
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
       }
+      return token;
     },
     async session({ session, token }) {
-      try {
-        if (session.user) {
-          // Pass data from token to session
-          (session.user as any).id = token.id;
-          (session.user as any).walletAddress = token.walletAddress;
-        }
-        return session;
-      } catch (error) {
-        console.error("🚨 [NEXTAUTH] SESSION_CALLBACK_ERROR:", error);
-        return session;
+      if (token?.id && session.user) {
+        (session.user as any).id = token.id as string;
       }
+      return session;
     },
   },
   pages: {
     signIn: "/auth/signin",
-    error: "/auth/signin", // Redirect errors back to signin
+    error: "/auth/signin",
   },
 };
