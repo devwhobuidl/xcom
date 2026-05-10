@@ -7,8 +7,12 @@ import nacl from "tweetnacl";
 import bs58 from "bs58";
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development' || true, // Keep true temporarily for production debugging
+  secret: process.env.NEXTAUTH_SECRET || "7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p", // Fallback for local, but production MUST have it
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID || "",
@@ -201,32 +205,37 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile }) {
       try {
         if (user) {
+          // On sign in
           token.id = (user as any).dbId || user.id;
           token.walletAddress = (user as any).walletAddress;
         }
+        
+        // Always return token
         return token;
       } catch (error) {
-        console.error("JWT_CALLBACK_ERROR:", error);
+        console.error("🚨 [NEXTAUTH] JWT_CALLBACK_ERROR:", error);
         return token;
       }
     },
     async session({ session, token }) {
       try {
         if (session.user) {
+          // Pass data from token to session
           (session.user as any).id = token.id;
           (session.user as any).walletAddress = token.walletAddress;
         }
         return session;
       } catch (error) {
-        console.error("SESSION_CALLBACK_ERROR:", error);
+        console.error("🚨 [NEXTAUTH] SESSION_CALLBACK_ERROR:", error);
         return session;
       }
     },
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin", // Redirect errors back to signin
   },
 };
