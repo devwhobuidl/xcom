@@ -1,4 +1,5 @@
 import { getCommunityBySlug, getJoinedCommunities } from "@/app/actions/community";
+export const dynamic = 'force-dynamic';
 import { CommunityFeed } from "@/components/feed/CommunityFeed";
 import { Composer } from "@/components/feed/Composer";
 import { Users, Skull, Target, Zap, Flame, Shield, ChevronLeft, MoreHorizontal, Share2, Info } from "lucide-react";

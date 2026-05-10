@@ -3,6 +3,7 @@ import { Shield, Users, MessageSquare, Zap, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const userCount = await prisma.user.count();

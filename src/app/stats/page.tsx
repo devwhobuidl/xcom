@@ -1,4 +1,5 @@
 import { getUserStats } from "@/app/actions/user";
+export const dynamic = 'force-dynamic';
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { PostCard } from "@/components/feed/PostCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

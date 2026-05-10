@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 import { Wallet, Info, ArrowUpRight, CheckCircle2, AlertCircle, History } from "lucide-react";
 
 export default async function TreasuryPage() {
