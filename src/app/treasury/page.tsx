@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { Wallet, Info, ArrowUpRight, CheckCircle2, AlertCircle, History } from "lucide-react";
 
 export default async function TreasuryPage() {
-  let recentDrops = [];
+  let recentDrops: any[] = [];
   try {
     recentDrops = await prisma.airdropLog.findMany({
       take: 10,

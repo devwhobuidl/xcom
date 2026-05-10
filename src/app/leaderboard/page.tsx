@@ -4,7 +4,7 @@ import { Trophy, Skull, Zap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default async function LeaderboardPage() {
-  let topHaters = [];
+  let topHaters: any[] = [];
   try {
     topHaters = await prisma.user.findMany({
       take: 50,

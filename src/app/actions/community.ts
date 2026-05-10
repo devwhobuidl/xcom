@@ -296,18 +296,23 @@ export async function leaveCommunity(communityId: string) {
 }
 
 export async function getJoinedCommunities() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return [];
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return [];
 
-  const userId = (session.user as any).id;
+    const userId = (session.user as any).id;
 
-  return await prisma.community.findMany({
-    where: {
-      members: {
-        some: { userId }
+    return await prisma.community.findMany({
+      where: {
+        members: {
+          some: { userId }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("GET_JOINED_COMMUNITIES_ERROR:", error);
+    return [];
+  }
 }
 
 export async function getPosts(page: number = 0, filter: "for-you" | "following" | string = "for-you") {
@@ -361,23 +366,28 @@ export async function getPosts(page: number = 0, filter: "for-you" | "following"
 }
 
 export async function getPostThread(postId: string) {
-  return await prisma.post.findUnique({
-    where: { id: postId },
-    include: {
-      author: true,
-      reactions: true,
-      replies: {
-        include: {
-          author: true,
-          reactions: true,
-          _count: {
-            select: { reactions: true, replies: true },
-          }
-        },
-        orderBy: { createdAt: "asc" }
+  try {
+    return await prisma.post.findUnique({
+      where: { id: postId },
+      include: {
+        author: true,
+        reactions: true,
+        replies: {
+          include: {
+            author: true,
+            reactions: true,
+            _count: {
+              select: { reactions: true, replies: true },
+            }
+          },
+          orderBy: { createdAt: "asc" }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error("GET_POST_THREAD_ERROR:", error);
+    return null;
+  }
 }
 
 export async function getSuggestedUsers() {

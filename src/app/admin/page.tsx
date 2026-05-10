@@ -9,7 +9,7 @@ export default async function AdminPage() {
   let userCount = 0;
   let postCount = 0;
   let totalPoints = { _sum: { points: 0 } };
-  let recentLogs = [];
+  let recentLogs: any[] = [];
 
   try {
     userCount = await prisma.user.count();

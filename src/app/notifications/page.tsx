@@ -26,7 +26,7 @@ export default async function NotificationsPage() {
 
   console.log("NotificationsPage: User found in DB:", user.username || user.walletAddress);
 
-  let notifications = [];
+  let notifications: any[] = [];
   try {
     notifications = await prisma.notification.findMany({
       where: { userId: user.id },

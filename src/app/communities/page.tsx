@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CommunityCard } from "@/components/communities/CommunityCard";
 
 export default async function CommunitiesPage() {
-  let communities = [];
+  let communities: any[] = [];
   try {
     communities = await prisma.community.findMany({
       orderBy: { createdAt: "desc" },
