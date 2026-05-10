@@ -19,8 +19,14 @@ export function HomeClient({ session }: HomeClientProps) {
     <div className="flex flex-col min-h-screen bg-black">
       {/* Home Feed Tabs */}
       <div className="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/5">
-        <div className="px-4 py-4">
-          <h2 className="text-xl font-black italic uppercase tracking-tighter">The Pit</h2>
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">The Pit</h2>
+            <p className="text-[10px] font-black uppercase tracking-widest text-red-600 animate-pulse">Frequency: 66.6 MHZ • Signal Chaotic</p>
+          </div>
+          <div className="px-3 py-1 bg-red-600/10 border border-red-600/20 rounded-full">
+            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Fuck You Nikita</span>
+          </div>
         </div>
         <div className="flex">
           <button 

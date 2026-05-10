@@ -17,7 +17,8 @@ import {
   LayoutGrid,
   Trophy,
   Zap,
-  Plus
+  Plus,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function Shell({ children, rightSidebar }: ShellProps) {
   const navigation = [
     { name: "THE PIT", href: "/", icon: Home },
     { name: "SQUAD", href: "/communities", icon: LayoutGrid },
+    { name: "CHAT", href: "/chat", icon: Mail },
     { name: "RANK", href: "/leaderboard", icon: Trophy },
     { name: "CHAOS", href: "/notifications", icon: Bell },
     { name: "PROFILE", href: `/profile/${session?.user?.id || 'me'}`, icon: User },
@@ -173,7 +175,7 @@ export function Shell({ children, rightSidebar }: ShellProps) {
             <Plus className="w-6 h-6 text-white" />
           </Button>
         </div>
-        <Link href="/notifications" className="p-2 text-zinc-500 hover:text-white"><Bell className="w-6 h-6" /></Link>
+        <Link href="/chat" className="p-2 text-zinc-500 hover:text-white"><MessageCircle className="w-6 h-6" /></Link>
         <Link href={`/profile/${session?.user?.id || 'me'}`} className="p-2 text-zinc-500 hover:text-white"><User className="w-6 h-6" /></Link>
       </nav>
 

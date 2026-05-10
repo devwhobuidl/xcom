@@ -218,10 +218,10 @@ export async function createCommunity(data: { name: string, slug: string, descri
     });
 
     revalidatePath("/communities");
-    return community;
-  } catch (error) {
+    return { success: true, community };
+  } catch (error: any) {
     console.error("CREATE_COMMUNITY_ERROR:", error);
-    throw error;
+    return { success: false, error: error.message || "Failed to create district" };
   }
 }
 

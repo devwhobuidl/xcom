@@ -32,12 +32,15 @@ export function CreateCommunityModal() {
 
     try {
       const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const community = await createCommunity({ name, slug, description });
-      toast.success("Community founded! The rebellion grows. 💀");
-      setOpen(false);
-      router.push(`/community/${community.slug}`);
-    } catch (error) {
-      toast.error("Failed to found community. Nikita must have patched the system.");
+      const res = await createCommunity({ name, slug, description });
+      if (res.success) {
+        toast.success("Community founded! The rebellion grows. 💀");
+        setOpen(false);
+        const community = (res as any).community;
+        router.push(`/community/${community.slug}`);
+      } else {
+        toast.error((res as any).error || "Failed to found community.");
+      }
     } finally {
       setLoading(false);
     }
