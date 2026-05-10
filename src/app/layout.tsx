@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "Official home of the $XCOM community. Fuck You Nikita.",
 };
 
+import { GlobalErrorBoundary } from "@/components/error/GlobalErrorBoundary";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,15 +30,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen overflow-x-hidden`}
+        className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen overflow-x-hidden bg-black`}
       >
-        <div className="fixed inset-0 pointer-events-none z-50">
+        <div className="fixed inset-0 pointer-events-none z-[100]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,0,0,0.05),transparent_70%)]" />
           <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/20 animate-scanline opacity-30" />
         </div>
-        <RootProvider>
-          <Shell rightSidebar={<RightSidebar />}>{children}</Shell>
-        </RootProvider>
+        <GlobalErrorBoundary>
+          <RootProvider>
+            <Shell rightSidebar={<RightSidebar />}>{children}</Shell>
+          </RootProvider>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );
