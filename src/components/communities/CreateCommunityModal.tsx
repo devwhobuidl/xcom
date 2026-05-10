@@ -31,7 +31,8 @@ export function CreateCommunityModal() {
     const description = formData.get("description") as string;
 
     try {
-      const community = await createCommunity({ name, description });
+      const slug = name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const community = await createCommunity({ name, slug, description });
       toast.success("Community founded! The rebellion grows. 💀");
       setOpen(false);
       router.push(`/community/${community.slug}`);
