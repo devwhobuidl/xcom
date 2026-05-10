@@ -46,7 +46,7 @@ export const CommunityCard = ({ community, isJoined: initialJoined }: CommunityC
 
     if (!session) {
       toast.error("You must enter the pit to join a district.");
-      openAuthModal("signin");
+      openAuthModal("login");
       return;
     }
 

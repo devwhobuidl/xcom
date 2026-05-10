@@ -168,7 +168,7 @@ export function ChatClient() {
           />
           <button
             type="submit"
-            disabled={sending || (session && !content.trim())}
+            disabled={sending || !session || !content.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] active:scale-95 group"
           >
             {sending ? (
