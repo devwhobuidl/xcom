@@ -7,6 +7,8 @@ import nacl from "tweetnacl";
 import bs58 from "bs58";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development' || true, // Keep true temporarily for production debugging
   providers: [
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID || "",
@@ -102,13 +104,14 @@ export const authOptions: NextAuthOptions = {
               name: user.username || publicKey.slice(0, 4) + "..." + publicKey.slice(-4),
               image: null,
               walletAddress: publicKey,
+              dbId: user.id, // Explicitly add dbId to match JWT callback expectation
             };
           } catch (dbError: any) {
-            console.error("🚨 Database error during auth:", dbError.message);
+            console.error("🚨 [NEXTAUTH] Database error during Solana auth:", dbError.message);
             return null;
           }
         } catch (e: any) {
-          console.error("🏁 Auth process failed:", e.message);
+          console.error("🏁 [NEXTAUTH] Solana auth process failed:", e.message);
           return null;
         }
       },
@@ -142,14 +145,15 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          console.log(`✅ User ${credentials.username} authenticated successfully.`);
+          console.log(`✅ [NEXTAUTH] User ${credentials.username} authenticated successfully.`);
           return {
             id: user.id,
             name: user.username,
             walletAddress: user.walletAddress,
+            dbId: user.id, // Explicitly add dbId
           };
         } catch (error: any) {
-          console.error("AUTH_USERNAME_LOGIN_ERROR:", error.message);
+          console.error("🚨 [NEXTAUTH] AUTH_USERNAME_LOGIN_ERROR:", error.message);
           if (error.message?.includes("Invalid URL")) {
             throw new Error("Database configuration error. Check DATABASE_URL.");
           }

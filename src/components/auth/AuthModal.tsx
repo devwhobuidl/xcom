@@ -51,11 +51,12 @@ export function AuthModal({ isOpen, onClose, initialTab = "login" }: AuthModalPr
       });
 
       if (res?.error) {
-        toast.error("Invalid credentials. Try again, rebel.");
+        toast.error(res.error === "CredentialsSignin" ? "Invalid credentials. Try again, rebel." : `Error: ${res.error}`);
       } else {
         toast.success("Welcome back to the pit.");
         onClose();
-        router.refresh();
+        // Use window.location for a full reload to ensure session state is updated everywhere
+        window.location.href = "/";
       }
     } catch (error) {
       toast.error("Nikita's firewall blocked the login.");
@@ -87,7 +88,7 @@ export function AuthModal({ isOpen, onClose, initialTab = "login" }: AuthModalPr
 
         if (!res?.error) {
           onClose();
-          router.refresh();
+          window.location.href = "/";
         } else {
           setActiveTab("login");
         }
