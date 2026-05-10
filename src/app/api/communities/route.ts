@@ -10,14 +10,19 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const communities = await prisma.community.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { members: true, posts: true }
+  try {
+    const communities = await prisma.community.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { members: true, posts: true }
+        }
       }
-    }
-  });
+    });
 
-  return NextResponse.json(communities);
+    return NextResponse.json(communities);
+  } catch (error) {
+    console.error("GET_COMMUNITIES_API_ERROR:", error);
+    return NextResponse.json([], { status: 200 }); // Return empty array instead of 500
+  }
 }

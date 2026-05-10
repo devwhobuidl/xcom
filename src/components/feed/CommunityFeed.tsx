@@ -30,9 +30,13 @@ export function CommunityFeed({ activeTab = "for-you" }: { activeTab?: "for-you"
       }
       
       setHasMore(data.length === 10);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching posts:", err);
-      setError("Failed to load the chaos. Try refreshing.");
+      if (err.message?.includes("Can't reach database") || err.message?.includes("Prisma")) {
+        setError("The signal is weak. Re-establishing connection to the pit...");
+      } else {
+        setError("Failed to load the chaos. The rebellion is currently offline.");
+      }
     } finally {
       setLoading(false);
     }

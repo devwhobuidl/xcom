@@ -164,17 +164,19 @@ export async function markNotificationsAsRead() {
 }
 
 export async function deletePost(postId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) throw new Error("Unauthorized");
 
-  // In a real app, check for admin role
-  // For the rebellion, maybe only the author or a specific wallet can delete
-  
-  await prisma.post.delete({
-    where: { id: postId }
-  });
+    await prisma.post.delete({
+      where: { id: postId }
+    });
 
-  revalidatePath("/");
+    revalidatePath("/");
+  } catch (error) {
+    console.error("DELETE_POST_ERROR:", error);
+    throw error;
+  }
 }
 
 export async function getCommunities() {
@@ -189,33 +191,38 @@ export async function getCommunities() {
 }
 
 export async function createCommunity(data: { name: string, slug: string, description?: string, avatar?: string, banner?: string }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) throw new Error("Unauthorized");
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) throw new Error("Unauthorized");
 
-  const userId = (session.user as any).id;
+    const userId = (session.user as any).id;
 
-  // Clean slug
-  const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    // Clean slug
+    const slug = data.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
 
-  const existing = await prisma.community.findUnique({ where: { slug } });
-  if (existing) throw new Error("Slug already taken");
+    const existing = await prisma.community.findUnique({ where: { slug } });
+    if (existing) throw new Error("Slug already taken");
 
-  const community = await prisma.community.create({
-    data: {
-      ...data,
-      slug,
-      memberCount: 1,
-      members: {
-        create: {
-          userId,
-          role: "admin"
+    const community = await prisma.community.create({
+      data: {
+        ...data,
+        slug,
+        memberCount: 1,
+        members: {
+          create: {
+            userId,
+            role: "admin"
+          }
         }
       }
-    }
-  });
+    });
 
-  revalidatePath("/communities");
-  return community;
+    revalidatePath("/communities");
+    return community;
+  } catch (error) {
+    console.error("CREATE_COMMUNITY_ERROR:", error);
+    throw error;
+  }
 }
 
 export async function getCommunityBySlug(slug: string) {
