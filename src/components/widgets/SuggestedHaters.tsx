@@ -40,7 +40,6 @@ export function SuggestedHaters() {
 
   if (loading) return null;
   if (users.length === 0) return null;
-
   return (
     <WidgetContainer title="Who to Roast" className="!rounded-[1.5rem]">
         <div className="flex flex-col">

@@ -1,55 +1,112 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { awardPoints } from "@/lib/points";
 
-export async function getUserProfile(usernameOrId: string) {
-  return await prisma.user.findFirst({
-    where: {
-      OR: [
-        { username: usernameOrId },
-        { id: usernameOrId },
-        { walletAddress: usernameOrId }
-      ]
-    },
+export async function getUserStats() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+
+  const userId = (session.user as any).id;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
     include: {
-      posts: {
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: true,
-          reactions: true,
-          _count: {
-            select: { reactions: true, replies: true },
-          }
-        }
-      },
       _count: {
         select: {
           posts: true,
           followers: true,
           following: true,
         }
-      }
+      },
+      posts: {
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: {
+          _count: {
+            select: {
+              reactions: true,
+              replies: true,
+            }
+          }
+        }
+      },
     }
   });
+
+  if (!user) return null;
+
+  // Calculate specific counts
+  const totalPosts = await prisma.post.count({
+    where: { authorId: userId, parentId: null }
+  });
+
+  const totalReplies = await prisma.post.count({
+    where: { authorId: userId, NOT: { parentId: null } }
+  });
+
+  const totalRoastsGiven = await prisma.reaction.count({
+    where: { userId: userId, type: "FUCK_YOU" }
+  });
+
+  const totalRoastsReceived = await prisma.reaction.count({
+    where: { post: { authorId: userId }, type: "FUCK_YOU" }
+  });
+
+  // Simple rank calculation based on points
+  const allUsersCount = await prisma.user.count();
+  const higherPointUsers = await prisma.user.count({
+    where: { points: { gt: user.points } }
+  });
+  const rank = higherPointUsers + 1;
+
+  return {
+    user: {
+      ...user,
+      rank,
+    },
+    counts: {
+      posts: totalPosts,
+      replies: totalReplies,
+      roastsGiven: totalRoastsGiven,
+      roastsReceived: totalRoastsReceived,
+      totalUsers: allUsersCount,
+    },
+    recentActivity: user.posts,
+  };
 }
 
 export async function getLeaderboard() {
-  return await prisma.user.findMany({
-    take: 100,
-    orderBy: { points: "desc" },
+  const users = await prisma.user.findMany({
+    orderBy: {
+      points: 'desc',
+    },
+    take: 50,
     select: {
-      id: true,
-      username: true,
       walletAddress: true,
-      image: true,
+      username: true,
       points: true,
-      rank: true,
     }
   });
+
+  return users.map((user, index) => ({
+    wallet: `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}`,
+    username: user.username,
+    points: user.points,
+    rank: index + 1,
+    label: getLabel(user.points, index + 1)
+  }));
+}
+
+function getLabel(points: number, rank: number) {
+  if (rank === 1) return "GOD OF CHAOS";
+  if (rank <= 3) return "LEGENDARY HATER";
+  if (rank <= 10) return "ELITE REBEL";
+  if (points > 5000) return "VETERAN";
+  return "REBEL";
 }
 
 export async function followUser(followingId: string) {
@@ -57,22 +114,27 @@ export async function followUser(followingId: string) {
   if (!session?.user) throw new Error("Unauthorized");
 
   const followerId = (session.user as any).id;
+  if (followerId === followingId) throw new Error("Can't follow yourself, narcissist.");
 
-  if (followerId === followingId) throw new Error("You can't follow yourself, narcissist.");
+  await prisma.follow.create({
+    data: {
+      followerId,
+      followingId,
+    },
+  });
 
-  try {
-    await prisma.follow.create({
-      data: {
-        followerId,
-        followingId,
-      }
-    });
+  // Create notification
+  await prisma.notification.create({
+    data: {
+      type: "FOLLOW",
+      userId: followingId,
+      issuerId: followerId,
+    },
+  });
 
-    revalidatePath(`/profile/${followingId}`);
-    return { success: true };
-  } catch (e) {
-    return { success: false };
-  }
+  await awardPoints(followerId, "FOLLOW");
+  revalidatePath(`/profile/${followingId}`);
+  return { success: true };
 }
 
 export async function unfollowUser(followingId: string) {
@@ -81,39 +143,41 @@ export async function unfollowUser(followingId: string) {
 
   const followerId = (session.user as any).id;
 
-  try {
-    await prisma.follow.delete({
-      where: {
-        followerId_followingId: {
-          followerId,
-          followingId,
-        }
-      }
-    });
+  await prisma.follow.delete({
+    where: {
+      followerId_followingId: {
+        followerId,
+        followingId,
+      },
+    },
+  });
 
-    revalidatePath(`/profile/${followingId}`);
-    return { success: true };
-  } catch (e) {
-    return { success: false };
-  }
+  revalidatePath(`/profile/${followingId}`);
+  return { success: true };
 }
 
-export async function updateProfile(data: { username?: string, bio?: string, image?: string, bannerImage?: string }) {
+export async function updateProfile(data: { username?: string; bio?: string; image?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new Error("Unauthorized");
 
   const userId = (session.user as any).id;
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      username: data.username,
-      bio: data.bio,
-      image: data.image,
-      bannerImage: data.bannerImage,
+  // If username is being updated, check if it's already taken
+  if (data.username) {
+    const existing = await prisma.user.findUnique({
+      where: { username: data.username },
+    });
+    if (existing && existing.id !== userId) {
+      throw new Error("Username already taken by another rebel.");
     }
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
   });
 
-  revalidatePath(`/profile/${userId}`);
-  return updatedUser;
+  revalidatePath("/profile");
+  revalidatePath(`/profile/${user.username || user.id}`);
+  return user;
 }
