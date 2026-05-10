@@ -53,7 +53,7 @@ model ChatMessage {
   user      User        @relation(fields: [userId], references: [id])
   channelId String
   channel   ChatChannel @relation(fields: [channelId], references: [id])
-  createdAt DateTime    @now()
+  createdAt DateTime    @default(now())
 }
 
 model Follow {
@@ -68,7 +68,7 @@ model Follow {
 }
 
 model Post {
-  id            String         @id @default(cuid())
+  id            String         @id @id @default(cuid())
   content       String
   imageUrl      String?
   authorId      String
